@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Basic Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary Brand Colors -->
+    <color name="blue">#2962FF</color>
+    <color name="blue_500">#2962FF</color>
+    <color name="setting_tab">#EEEEEEFF</color>
+
+    <!-- UI States -->
+    <color name="ripple_effect_color">#33FFFFFF</color>
+
+    <!-- Material Theme Colors -->
+    <color name="colorPrimary">#6200EE</color>
+
+    <!-- Surface & Background -->
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="background_light">#FAFAFA</color>
+    <color name="lightGray">#F5F5F5</color>
+
+    <!-- Text Colors -->
+    <color name="colorOnPrimary">#FFFFFF</color>
+
+    <!-- Divider Color -->
+
+    <!-- Gray Scale -->
+    <color name="gray_300">#E0E0E0</color>
+    <color name="gray_600">#757575</color>
+    <color name="gray_700">#616161</color>
+    <color name="gray_800">#424242</color>
+
+    <!-- Status Colors -->
+
+    <!-- Material Design Colors -->
+
+    <!-- File Type Colors -->
+    <color name="pdf_color">#F44336</color>
+    <color name="word_color">#2196F3</color>
+    <color name="text_color">#4CAF50</color>
+
+    <!-- Border/Outline -->
+    <color name="outline_light">#E0E0E0</color>
+
+    <!-- Selection States -->
+
+    <!-- Transparent -->
+
+    <!-- Gradient -->
+
+    <!-- Icon Colors -->
+
+    <!-- Grid/List Toggle -->
+
+
+</resources>

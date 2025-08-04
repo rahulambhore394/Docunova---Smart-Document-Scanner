@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Docunova</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID.apps.googleusercontent.com</string>
+</resources>
