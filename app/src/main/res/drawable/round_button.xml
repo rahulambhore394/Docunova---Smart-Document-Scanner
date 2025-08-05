@@ -1,0 +1,11 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <gradient
+        android:startColor="#3F54F4"
+        android:centerColor="#547CFF"
+        android:endColor="#84B3FD"
+        android:angle="90" /> <!-- You can change angle to 270, 0, 180 as needed -->
+
+    <corners android:radius="16dp" />
+</shape>

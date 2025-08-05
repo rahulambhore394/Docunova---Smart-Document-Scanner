@@ -1,0 +1,4 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true" android:drawable="@drawable/option_selected_bg"/>
+    <item android:drawable="@drawable/option_default_bg"/>
+</selector>
