@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="60dp"
+        android:layout_height="24dp"
+        android:background="#E2E8F0" />
+
+    <View
+        android:layout_width="100dp"
+        android:layout_height="14dp"
+        android:layout_marginTop="6dp"
+        android:background="#E2E8F0" />
+</LinearLayout>
