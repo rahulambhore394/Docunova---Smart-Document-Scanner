@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/sort_name_asc"
+            android:title="Name (A-Z)" />
+        <item
+            android:id="@+id/sort_name_desc"
+            android:title="Name (Z-A)" />
+        <item
+            android:id="@+id/sort_date_newest"
+            android:title="Date (Newest)" />
+        <item
+            android:id="@+id/sort_date_oldest"
+            android:title="Date (Oldest)" />
+        <item
+            android:id="@+id/sort_size_largest"
+            android:title="Size (Largest)" />
+        <item
+            android:id="@+id/sort_size_smallest"
+            android:title="Size (Smallest)" />
+    </group>
+</menu>
