@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- Toolbar -->
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarSecurity"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/blue_500"
+        app:title="Security "
+        app:titleTextColor="@android:color/white"
+        app:navigationIcon="@drawable/ic_back" />
+    <!-- Scrollable Security Info from Backend -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_security_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading security information..."
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            android:lineSpacingExtra="4dp"/>
+    </ScrollView>
+</LinearLayout>
