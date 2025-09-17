@@ -15,3 +15,5 @@ captures/
 *.apk
 app/release/*.aab
 app/release/*.apk
+*.log
+
