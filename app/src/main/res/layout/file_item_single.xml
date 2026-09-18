@@ -3,45 +3,53 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
+    android:layout_marginHorizontal="2dp"
     android:layout_marginVertical="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="#F1F5F9"
-    android:backgroundTint="@android:color/white"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#EEF2F6"
+    app:rippleColor="#152563EB">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp">
 
-        <FrameLayout
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            android:background="@drawable/image_rounded_bg"
-            android:backgroundTint="#F1F5F9">
+        <!-- Modern Thumbnail Container with Card Clip -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E2E8F0"
+            app:cardBackgroundColor="#F8FAFC">
 
             <ImageView
                 android:id="@+id/imageThumbnail2"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="10dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_files2" />
-        </FrameLayout>
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_pdf" />
+        </com.google.android.material.card.MaterialCardView>
 
+        <!-- Document Details: Two Rows -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
+            android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
+            <!-- Title: Now has full width -->
             <TextView
                 android:id="@+id/fileTitle2"
                 android:layout_width="match_parent"
@@ -49,55 +57,73 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Document Title"
-                android:textColor="#1E293B"
+                android:textColor="#0F172A"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/fileMeta2"
+            <!-- Metadata Row: Format Badge + Size & Date -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Size • Date"
-                android:textColor="#64748B"
-                android:textSize="12sp" />
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/fileType2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_badge_blue"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="PDF"
+                    android:textColor="#2563EB"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/fileMeta2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Size • Date"
+                    android:textColor="#64748B"
+                    android:textSize="11.5sp" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/fileType2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/file_type_badge"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:text="PDF"
-                android:textColor="@color/blue_500"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
             <ImageButton
                 android:id="@+id/downloadBtn"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_action_btn_circle"
+                android:contentDescription="Download"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_downlaod"
-                android:layout_marginStart="4dp"
-                app:tint="#64748B" />
+                app:tint="#475569" />
 
             <ImageButton
                 android:id="@+id/Btn_more"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_action_btn_circle"
+                android:contentDescription="More options"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_more_vert"
-                app:tint="#64748B" />
-
+                app:tint="#475569" />
         </LinearLayout>
 
     </LinearLayout>

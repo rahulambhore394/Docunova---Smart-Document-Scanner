@@ -1,34 +1,76 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Docunova Production ProGuard & R8 Optimization Rules
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve stacktrace line numbers and essential attributes
+-keepattributes SourceFile,LineNumberTable,Signature,*Annotation*,InnerClasses,EnclosingMethod
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Gson & Reflection Keep Rules
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+    @com.google.gson.annotations.Expose <fields>;
+}
+-keep class com.google.gson.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# App Data Models & Room Entities (prevent obfuscation of fields required for serialization/DB)
+-keep class com.developer_rahul.docunova.RoomDB.** { *; }
+-keep class com.developer_rahul.docunova.Fragments.Files.DriveFileModel { *; }
+-keep class com.developer_rahul.docunova.TranslationApiClient$** { *; }
 
-# Ignore all warnings about Apache HttpClient (deprecated)
+# Retrofit 2
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
+
+# OkHttp & Okio
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# Room Database
+-keep class * extends androidx.room.RoomDatabase
+-dontwarn androidx.room.paging.**
+
+# Google API Client & Google Drive API
+-keep class com.google.api.client.** { *; }
+-keep class com.google.api.services.drive.** { *; }
+-keepclassmembers class * {
+    @com.google.api.client.util.Key <fields>;
+}
+-dontwarn com.google.api.client.**
+-dontwarn com.google.common.**
 -dontwarn org.apache.http.**
 -dontnote org.apache.http.**
--dontwarn java.awt.**
--dontwarn javax.xml.stream.**
--dontwarn org.apache.batik.**
--dontwarn net.sf.saxon.**
--dontwarn org.openjsse.**
--dontwarn org.osgi.framework.**
--dontwarn org.slf4j.**
--dontwarn org.bouncycastle.**
 
+# Glide
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public class * extends com.bumptech.glide.module.LibraryGlideModule
+-keep class com.bumptech.glide.** { *; }
+-dontwarn com.bumptech.glide.**
+
+# ML Kit Document Scanner & Vision Text Recognition
+-keep class com.google.mlkit.** { *; }
+-dontwarn com.google.mlkit.**
+
+# iText 7 PDF Parser
+-keep class com.itextpdf.kernel.** { *; }
+-keep class com.itextpdf.io.** { *; }
+-dontwarn com.itextpdf.**
+-dontwarn org.slf4j.**
+
+# DocxHelper
+-keep class com.developer_rahul.docunova.DocxHelper { *; }
+
+
+# Shimmer
+-keep class com.facebook.shimmer.** { *; }
+-dontwarn com.facebook.shimmer.**
+
+# CircleImageView
+-keep class de.hdodenhof.circleimageview.** { *; }
+-dontwarn de.hdodenhof.circleimageview.**
+
+# ViewBinding
+-keep class com.developer_rahul.docunova.databinding.** { *; }
+
+# Coroutines
+-dontwarn kotlinx.coroutines.**

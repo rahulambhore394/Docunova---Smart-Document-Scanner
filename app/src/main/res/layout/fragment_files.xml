@@ -6,117 +6,251 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <!-- Compact Flat Header -->
+    <!-- Elevated Modern App Bar with Gradient Header -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         app:elevation="0dp">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!-- Solid Flat Background -->
-            <View
+            <!-- Gradient Header Banner -->
+            <RelativeLayout
+                android:id="@+id/filesHeader"
                 android:layout_width="match_parent"
-                android:layout_height="110dp"
-                android:background="@color/blue" />
+                android:layout_height="125dp"
+                android:background="@drawable/bg_gradient_header"
+                android:paddingStart="20dp"
+                android:paddingTop="20dp"
+                android:paddingEnd="20dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- Title & Actions Row -->
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="64dp"
-                    android:paddingHorizontal="20dp"
-                    android:layout_marginBottom="15dp">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="vertical">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:text="My Documents"
+                        android:text="Cloud Vault"
                         android:textColor="@android:color/white"
-                        android:textSize="20sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tvVaultSubtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="2dp"
+                        android:text="Secured on Google Drive"
+                        android:textColor="#DBEAFE"
+                        android:textSize="13sp" />
+                </LinearLayout>
 
-                        <ImageButton
-                            android:id="@+id/btnViewType"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_grid_view"
-                            app:tint="@android:color/white" />
+                <!-- Action Buttons: View Toggle & Sort -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal">
 
-                        <ImageButton
-                            android:id="@+id/btnSort"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="4dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_sort"
-                            app:tint="@android:color/white" />
-                    </LinearLayout>
-                </RelativeLayout>
+                    <ImageButton
+                        android:id="@+id/btnViewType"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_nav_back"
+                        android:contentDescription="Toggle View Mode"
+                        android:padding="9dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_grid_view"
+                        app:tint="@android:color/white" />
 
-                <!-- Floating Search Bar -->
-                <com.google.android.material.card.MaterialCardView
+                    <ImageButton
+                        android:id="@+id/btnSort"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_nav_back"
+                        android:contentDescription="Sort Documents"
+                        android:padding="9dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_sort"
+                        app:tint="@android:color/white" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <!-- Floating Search Capsule & Filter Bar Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-26dp"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="6dp">
+
+                <!-- Search Card -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginHorizontal="20dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:strokeWidth="0dp">
+                    android:layout_height="52dp"
+                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="5dp"
+                    app:cardPreventCornerOverlap="false">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp">
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@android:drawable/ic_menu_search"
-                            app:tint="@color/gray_600" />
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_search_24"
+                            app:tint="#64748B" />
 
                         <EditText
                             android:id="@+id/searchEditText"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_marginStart="12dp"
-                            android:background="@android:color/transparent"
-                            android:hint="Search documents..."
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:hint="Search files by name..."
                             android:imeOptions="actionSearch"
                             android:inputType="text"
                             android:maxLines="1"
                             android:singleLine="true"
-                            android:textColor="@color/black"
+                            android:textColor="#0F172A"
+                            android:textColorHint="#94A3B8"
                             android:textSize="14sp" />
+
+                        <ImageView
+                            android:id="@+id/btnClearSearch"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_clear_24"
+                            android:visibility="gone"
+                            app:tint="#94A3B8" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Filter Chips Row -->
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:overScrollMode="never"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chipFilterAll"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:background="@drawable/bg_filter_chip_active"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="All Files"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipFilterPdf"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_filter_chip_inactive"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="PDFs"
+                            android:textColor="#64748B"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipFilterDocs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_filter_chip_inactive"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Word (.docx)"
+                            android:textColor="#64748B"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipFilterTxt"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_filter_chip_inactive"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Text (.txt)"
+                            android:textColor="#64748B"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipFilterImages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_filter_chip_inactive"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Images &amp; Scans"
+                            android:textColor="#64748B"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </HorizontalScrollView>
             </LinearLayout>
-        </RelativeLayout>
+        </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Main Content -->
+    <!-- Main Content with Swipe Refresh -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshFiles"
         android:layout_width="match_parent"
@@ -127,38 +261,42 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <!-- Shimmer Loading -->
             <com.facebook.shimmer.ShimmerFrameLayout
                 android:id="@+id/shimmerFiles"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingTop="8dp"
                 android:visibility="visible">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
-                    <include layout="@layout/shimmer_file_item"/>
+
+                    <include layout="@layout/shimmer_file_item" />
+                    <include layout="@layout/shimmer_file_item" />
+                    <include layout="@layout/shimmer_file_item" />
+                    <include layout="@layout/shimmer_file_item" />
+                    <include layout="@layout/shimmer_file_item" />
+                    <include layout="@layout/shimmer_file_item" />
                 </LinearLayout>
             </com.facebook.shimmer.ShimmerFrameLayout>
 
+            <!-- RecyclerView for Files -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewFiles"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:paddingHorizontal="8dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="100dp"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="108dp"
                 android:visibility="gone"
                 tools:listitem="@layout/file_item_single" />
 
-            <!-- Empty State -->
+            <!-- Delightful Modern Empty State -->
             <LinearLayout
                 android:id="@+id/emptyStateView"
                 android:layout_width="match_parent"
@@ -169,41 +307,67 @@
                 android:padding="32dp"
                 android:visibility="gone">
 
-                <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/ic_files2"
-                    app:tint="#CBD5E1" />
+                <FrameLayout
+                    android:layout_width="84dp"
+                    android:layout_height="84dp"
+                    android:background="@drawable/bg_squircle_blue">
+
+                    <ImageView
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_documents_stack_24"
+                        app:tint="#2563EB" />
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="No Documents"
-                    android:textColor="#1E293B"
+                    android:text="No Documents Found"
+                    android:textColor="#0F172A"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvEmptyDescription"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="6dp"
                     android:gravity="center"
-                    android:text="Your scanned and uploaded files will appear here."
+                    android:maxWidth="260dp"
+                    android:text="Your scanned and uploaded documents on Google Drive will appear here."
                     android:textColor="#64748B"
-                    android:textSize="14sp" />
+                    android:textSize="13.5sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEmptyScan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="18dp"
+                    android:backgroundTint="#2563EB"
+                    android:icon="@drawable/ic_add"
+                    android:text="Scan Document"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13.5sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp" />
             </LinearLayout>
         </RelativeLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+    <!-- Elevated Floating Action Button (offset safely above bottom navigation) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
-        app:backgroundTint="@color/blue_500"
-        app:elevation="8dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="96dp"
+        android:contentDescription="Scan Document"
+        app:backgroundTint="#2563EB"
+        app:elevation="6dp"
         app:fabSize="normal"
         app:srcCompat="@drawable/ic_add"
         app:tint="@android:color/white" />

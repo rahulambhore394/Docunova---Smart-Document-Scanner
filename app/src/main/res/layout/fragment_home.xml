@@ -9,489 +9,760 @@
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="#F8FAFC"
+        android:overScrollMode="never">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!-- Header -->
+            <!-- Elevated Gradient Header with Profile & Greeting -->
             <RelativeLayout
                 android:id="@+id/layout_heading"
                 android:layout_width="match_parent"
-                android:layout_height="275dp"
-                android:background="@drawable/bg_blue_rounded_bottom">
-
-                <TextView
-                    android:id="@+id/tv_hello"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="30dp"
-                    android:text="Hello,"
-                    android:textColor="@android:color/white"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_Username"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_hello"
-                    android:layout_marginStart="20dp"
-                    android:text="Rahul!"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvSubGreeting"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_Username"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="4dp"
-                    android:text="Ready to scan some documents?"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp" />
-
-
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/profileImage_home"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_marginTop="33dp"
-                    android:layout_marginEnd="29dp"
-                    android:src="@drawable/ic_profile"
-                    app:civ_border_color="@color/colorOnPrimary"
-                    app:civ_border_width="2dp" />
+                android:layout_height="220dp"
+                android:background="@drawable/bg_gradient_header"
+                android:paddingStart="20dp"
+                android:paddingTop="28dp"
+                android:paddingEnd="20dp">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/tvSubGreeting"
-                    android:layout_margin="16dp"
-                    android:background="@drawable/card_white_shadow"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="30dp">
-
-                    <LinearLayout
-                        android:id="@+id/layout_capture"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Scan Document"
-                            android:textColor="@android:color/black"
-                            android:textSize="23sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Capture and convert instantly"
-                            android:textColor="#888888"
-                            android:textSize="15sp" />
-                    </LinearLayout>
-
-
-                    <ImageButton
-                        android:id="@+id/iv_scan"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:background="@drawable/round_button"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/ic_camera"
-                        app:tint="@android:color/white" />
-                </LinearLayout>
-
-            </RelativeLayout>
-
-            <!--cards-->
-            <RelativeLayout
-                android:id="@+id/cards"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/layout_heading"
-                android:layout_margin="10dp"
-                android:layout_marginTop="10dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toStartOf="@id/profileImage_home"
                     android:orientation="vertical">
 
-                    <!-- First Row -->
+                    <!-- Cloud Status Badge -->
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="horizontal"
-                        android:weightSum="3">
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_quick_pill"
+                        android:backgroundTint="#25FFFFFF"
+                        android:gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="3dp">
 
-                        <!-- Upload -->
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="0dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:layout_weight="1"
-                            android:backgroundTint="#EAF9F3"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp"
-                            app:cardPreventCornerOverlap="false">
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_verified_badge"
+                            app:tint="#6EE7B7" />
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:orientation="vertical">
-
-                                <ImageView
-                                    android:layout_width="36dp"
-                                    android:layout_height="36dp"
-                                    android:contentDescription="Upload"
-                                    android:src="@drawable/ic_upload"
-                                    app:tint="#00B273" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="12dp"
-                                    android:text="Upload"
-                                    android:textColor="#000"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="From gallery"
-                                    android:textColor="#888"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tv_select_upload"
-                                    style="@style/OptionTextView"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Select"
-                                    android:textColor="#000"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Translate -->
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="0dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:layout_weight="1"
-                            android:backgroundTint="#EEF1FE"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp"
-                            app:cardPreventCornerOverlap="false">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:orientation="vertical">
-
-                                <ImageView
-                                    android:layout_width="36dp"
-                                    android:layout_height="36dp"
-                                    android:contentDescription="Translate"
-                                    android:src="@drawable/ic_translate"
-                                    app:tint="#3F54F4" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="12dp"
-                                    android:text="Translate"
-                                    android:textColor="#000"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Any language"
-                                    android:textColor="#888"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tv_start_translate"
-                                    style="@style/OptionTextView"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Start"
-                                    android:textColor="#000"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Files -->
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="0dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:layout_weight="1"
-                            android:backgroundTint="#F4F8FB"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp"
-                            app:cardPreventCornerOverlap="false">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:orientation="vertical">
-
-                                <ImageView
-                                    android:layout_width="36dp"
-                                    android:layout_height="36dp"
-                                    android:contentDescription="Files"
-                                    android:src="@drawable/ic_files2"
-                                    app:tint="#2B3F73" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="12dp"
-                                    android:text="Files"
-                                    android:textColor="#000"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="All docs"
-                                    android:textColor="#888"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tv_view_files"
-                                    style="@style/OptionTextView"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="View"
-                                    android:textColor="#000"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="Google Drive Active"
+                            android:textColor="#E0E7FF"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Second Row -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tv_hello"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:gravity="center"
-                        android:orientation="horizontal"
-                        android:weightSum="2">
+                        android:text="Hello,"
+                        android:textColor="#BFDBFE"
+                        android:textSize="16sp"
+                        android:textStyle="normal" />
 
-                        <!-- Documents Scanned -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/cardDocuments"
-                            android:layout_width="0dp"
-                            android:layout_height="100dp"
-                            android:layout_margin="8dp"
-                            android:layout_weight="1"
-                            android:backgroundTint="#F4F8FB"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp"
-                            app:cardPreventCornerOverlap="false">
+                    <TextView
+                        android:id="@+id/tv_Username"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Rahul Ambhore"
+                        android:textColor="@android:color/white"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:padding="16dp">
-
-                                <ImageView
-                                    android:layout_width="32dp"
-                                    android:layout_height="32dp"
-                                    android:layout_marginEnd="12dp"
-                                    android:src="@drawable/ic_scanned_files"
-                                    app:tint="#3F54F4" />
-
-                                <FrameLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content">
-
-                                    <com.facebook.shimmer.ShimmerFrameLayout
-                                        android:id="@+id/shimmer_scanned_count"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:visibility="visible">
-
-                                        <include layout="@layout/shimmer_home_stats" />
-                                    </com.facebook.shimmer.ShimmerFrameLayout>
-
-                                    <LinearLayout
-                                        android:id="@+id/layout_scanned_data"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:orientation="vertical"
-                                        android:visibility="gone">
-
-                                        <TextView
-                                            android:id="@+id/tv_scanned_files_count"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:textColor="#000"
-                                            android:textSize="20sp"
-                                            android:textStyle="bold"
-                                            tools:text="47" />
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:text="Documents scanned"
-                                            android:textColor="#888"
-                                            android:textSize="14sp" />
-                                    </LinearLayout>
-                                </FrameLayout>
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Storage Used -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/cardStorage"
-                            android:layout_width="0dp"
-                            android:layout_height="100dp"
-                            android:layout_margin="8dp"
-                            android:layout_weight="1"
-                            android:backgroundTint="#F4F8FB"
-                            app:cardCornerRadius="24dp"
-                            app:cardElevation="6dp"
-                            app:cardPreventCornerOverlap="false">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:padding="16dp">
-
-                                <ImageView
-                                    android:layout_width="32dp"
-                                    android:layout_height="32dp"
-                                    android:layout_marginEnd="12dp"
-                                    android:src="@drawable/ic_cloud_store"
-                                    app:tint="#00B273" />
-
-                                <FrameLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content">
-
-                                    <com.facebook.shimmer.ShimmerFrameLayout
-                                        android:id="@+id/shimmer_storage_used"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:visibility="visible">
-
-                                        <include layout="@layout/shimmer_home_stats" />
-                                    </com.facebook.shimmer.ShimmerFrameLayout>
-
-                                    <LinearLayout
-                                        android:id="@+id/layout_storage_data"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:orientation="vertical"
-                                        android:visibility="gone">
-
-                                        <TextView
-                                            android:id="@+id/tv_drive_size"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:textColor="#000"
-                                            android:textSize="20sp"
-                                            android:textStyle="bold"
-                                            tools:text="2.3 GB" />
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:text="Storage used"
-                                            android:textColor="#888"
-                                            android:textSize="14sp" />
-                                    </LinearLayout>
-                                </FrameLayout>
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                    </LinearLayout>
+                    <TextView
+                        android:id="@+id/tvSubGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Ready to scan and organize?"
+                        android:textColor="#DBEAFE"
+                        android:textSize="13sp" />
                 </LinearLayout>
 
+                <!-- Profile Avatar with White Border -->
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profileImage_home"
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_profile"
+                    app:civ_border_color="#FFFFFF"
+                    app:civ_border_width="2.5dp" />
             </RelativeLayout>
 
-
-            <RelativeLayout
-                android:id="@+id/recycler_card"
+            <!-- Main Content Container with Overlapping Hero Card -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/cards"
-                android:layout_margin="10dp">
+                android:layout_marginTop="-48dp"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="90dp">
 
-
-                <TextView
-                    android:id="@+id/tv_recent_files"
-                    android:layout_width="wrap_content"
+                <!-- Floating Hero Scan Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardScanHero"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:text="Recent Files"
-                    android:textColor="@android:color/black"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="8dp"
+                    app:cardPreventCornerOverlap="false">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="20dp">
+
+                        <LinearLayout
+                            android:id="@+id/layout_capture"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Scan Document"
+                                android:textColor="#0F172A"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="AI Auto-Crop &amp; HD PDF Export"
+                                android:textColor="#64748B"
+                                android:textSize="13sp" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Tap to scan instantly"
+                                    android:textColor="#2563EB"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="14dp"
+                                    android:layout_height="14dp"
+                                    android:layout_marginStart="2dp"
+                                    android:src="@drawable/ic_chevron_right_24"
+                                    app:tint="#2563EB" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Camera Action Button -->
+                        <ImageButton
+                            android:id="@+id/iv_scan"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:background="@drawable/bg_scan_pulse"
+                            android:contentDescription="Scan"
+                            android:elevation="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_camera"
+                            app:tint="@android:color/white" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Bento Quick Action Tools -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:text="Quick Actions"
+                        android:textColor="#0F172A"
+                        android:textSize="16.5sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_pill_badge_ai"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="9dp"
+                        android:paddingVertical="3.5dp">
+
+                        <View
+                            android:layout_width="6dp"
+                            android:layout_height="6dp"
+                            android:layout_marginEnd="5dp"
+                            android:background="@drawable/bg_dot_emerald" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="AI Powered"
+                            android:textColor="#475569"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:id="@+id/cards"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <!-- Extract Text / OCR Bento Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardUpload"
+                        android:layout_width="0dp"
+                        android:layout_height="122dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="1.2dp"
+                        app:strokeColor="#BBF7D0"
+                        app:rippleColor="#20059669">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_quick_action_emerald"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <FrameLayout
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:background="@drawable/bg_squircle_emerald">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:src="@drawable/ic_ocr_scan_24"
+                                        app:tint="#059669" />
+                                </FrameLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_pill_badge_green"
+                                    android:paddingHorizontal="6dp"
+                                    android:paddingVertical="2.5dp"
+                                    android:text="OCR"
+                                    android:textColor="#047857"
+                                    android:textSize="9.5sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Extract"
+                                android:textColor="#0F172A"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_select_upload"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Text to AI"
+                                android:textColor="#059669"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Translate Bento Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardTranslate"
+                        android:layout_width="0dp"
+                        android:layout_height="122dp"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="1.2dp"
+                        app:strokeColor="#DDD6FE"
+                        app:rippleColor="#207C3AED">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_quick_action_purple"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <FrameLayout
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:background="@drawable/bg_squircle_purple">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:src="@drawable/ic_translate"
+                                        app:tint="#7C3AED" />
+                                </FrameLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_pill_badge_indigo"
+                                    android:paddingHorizontal="6dp"
+                                    android:paddingVertical="2.5dp"
+                                    android:text="AI"
+                                    android:textColor="#6D28D9"
+                                    android:textSize="9.5sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Translate"
+                                android:textColor="#0F172A"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_start_translate"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="110+ Lang"
+                                android:textColor="#7C3AED"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Cloud Vault Bento Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardFiles"
+                        android:layout_width="0dp"
+                        android:layout_height="122dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="1.2dp"
+                        app:strokeColor="#BFDBFE"
+                        app:rippleColor="#202563EB">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_quick_action_blue"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <FrameLayout
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:background="@drawable/bg_squircle_blue">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:src="@drawable/ic_files2"
+                                        app:tint="#2563EB" />
+                                </FrameLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_pill_badge_blue"
+                                    android:paddingHorizontal="6dp"
+                                    android:paddingVertical="2.5dp"
+                                    android:text="Vault"
+                                    android:textColor="#1D4ED8"
+                                    android:textSize="9.5sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Vault"
+                                android:textColor="#0F172A"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_view_files"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Drive Sync"
+                                android:textColor="#2563EB"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- Cloud Metrics Section (2-Column Bento Metric Tiles) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <!-- Documents Scanned Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardDocuments"
+                        android:layout_width="0dp"
+                        android:layout_height="122dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="1.2dp"
+                        app:strokeColor="#BFDBFE"
+                        app:rippleColor="#202563EB">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_tile_docs_gradient"
+                            android:orientation="vertical"
+                            android:padding="13dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <FrameLayout
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:background="@drawable/bg_squircle_blue">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:src="@drawable/ic_documents_stack_24"
+                                        app:tint="#2563EB" />
+                                </FrameLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_pill_badge_blue"
+                                    android:paddingHorizontal="7dp"
+                                    android:paddingVertical="2.5dp"
+                                    android:text="Synced"
+                                    android:textColor="#2563EB"
+                                    android:textSize="9.5sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <FrameLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+
+                                <com.facebook.shimmer.ShimmerFrameLayout
+                                    android:id="@+id/shimmer_scanned_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:visibility="visible">
+
+                                    <include layout="@layout/shimmer_home_stats" />
+                                </com.facebook.shimmer.ShimmerFrameLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/layout_scanned_data"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone">
+
+                                    <TextView
+                                        android:id="@+id/tv_scanned_files_count"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="#0F172A"
+                                        android:textSize="22sp"
+                                        android:textStyle="bold"
+                                        tools:text="47" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:text="Scanned Docs"
+                                        android:textColor="#2563EB"
+                                        android:textSize="11.5sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </FrameLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Storage Used Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardStorage"
+                        android:layout_width="0dp"
+                        android:layout_height="122dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="1.2dp"
+                        app:strokeColor="#BBF7D0"
+                        app:rippleColor="#20059669">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_tile_storage_gradient"
+                            android:orientation="vertical"
+                            android:padding="13dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <FrameLayout
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:background="@drawable/bg_squircle_emerald">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:src="@drawable/ic_cloud_sync_24"
+                                        app:tint="#059669" />
+                                </FrameLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_pill_badge_green"
+                                    android:paddingHorizontal="7dp"
+                                    android:paddingVertical="2.5dp"
+                                    android:text="Drive"
+                                    android:textColor="#047857"
+                                    android:textSize="9.5sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <FrameLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+
+                                <com.facebook.shimmer.ShimmerFrameLayout
+                                    android:id="@+id/shimmer_storage_used"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:visibility="visible">
+
+                                    <include layout="@layout/shimmer_home_stats" />
+                                </com.facebook.shimmer.ShimmerFrameLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/layout_storage_data"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone">
+
+                                    <TextView
+                                        android:id="@+id/tv_drive_size"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="#0F172A"
+                                        android:textSize="20sp"
+                                        android:textStyle="bold"
+                                        tools:text="2.3 GB" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:text="Cloud Storage"
+                                        android:textColor="#059669"
+                                        android:textSize="11.5sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </FrameLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- Recent Files Section Header -->
+                <RelativeLayout
+                    android:id="@+id/recycler_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:id="@+id/tv_recent_files"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:text="Recent Documents"
+                        android:textColor="#0F172A"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btnViewAllRecent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="4dp"
+                        android:text="See All"
+                        android:textColor="#2563EB"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <!-- Shimmer Loading Container for Recent Files -->
                 <com.facebook.shimmer.ShimmerFrameLayout
                     android:id="@+id/shimmer_recent_files"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_recent_files"
-                    android:layout_marginTop="5dp"
-                    android:paddingHorizontal="16dp">
+                    android:visibility="visible">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
-
                         <include layout="@layout/shimmer_file_item" />
-
                         <include layout="@layout/shimmer_file_item" />
-
                         <include layout="@layout/shimmer_file_item" />
                     </LinearLayout>
                 </com.facebook.shimmer.ShimmerFrameLayout>
 
+                <!-- Recent Files Recycler View -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recentFilesRecycler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_recent_files"
-                    android:layout_marginTop="5dp"
-                    android:paddingHorizontal="16dp"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"
                     android:visibility="gone"
-                    tools:itemCount="5" />
+                    tools:listitem="@layout/file_item_single" />
 
-            </RelativeLayout>
-        </RelativeLayout>
+            </LinearLayout>
+        </LinearLayout>
     </ScrollView>
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

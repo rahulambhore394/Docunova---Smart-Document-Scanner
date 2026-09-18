@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.HtmlCompat
 import com.developer_rahul.docunova.databinding.ActivityHelpAndSupportBinding
 
 class HelpSupportActivity : AppCompatActivity() {
@@ -30,38 +31,18 @@ class HelpSupportActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
-
-        // WhatsApp Support
-        binding.btnWhatsAppSupport.setOnClickListener {
-            val phone = "+917385937358" // replace with your support number
-            val url = "https://wa.me/$phone?text=Hello%20I%20need%20help%20with%20DocuNova"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
     }
 
     private fun setHelpContent() {
-        val faqText = """
-            📌 Frequently Asked Questions (FAQ)
-            
-            1. How do I scan a new document?
-            → Go to Home > Tap on + button > Select Scan.
-            
-            2. Where are my files stored?
-            → By default, files are stored on your device. You can enable cloud backup in settings.
-            
-            3. Can I share my documents?
-            → Yes! Open any file and tap on the Share icon.
-            
-            4. I cannot open a PDF file.
-            → Ensure you have a PDF reader installed on your phone.
-            
-            5. How do I contact support?
-            → Use the Email or WhatsApp buttons below.
-            
-            ℹ️ App Version: ${BuildConfig.VERSION_NAME}
+        val tipsHtml = """
+            <b>Pro Tips for Scanning Excellence:</b><br/>
+            • <b>Lighting:</b> Position documents in even, natural light to minimize reflections.<br/>
+            • <b>Contrast:</b> Place papers on a contrasting surface (e.g. dark desk) for automated edge detection.<br/>
+            • <b>OCR Accuracy:</b> Hold device level and parallel to document for 99%+ text recognition accuracy.<br/>
+            <br/>
+            <b>App Version:</b> DocuNova v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
         """.trimIndent()
 
-        binding.tvFaq.text = faqText
+        binding.tvFaq.text = HtmlCompat.fromHtml(tipsHtml, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 }

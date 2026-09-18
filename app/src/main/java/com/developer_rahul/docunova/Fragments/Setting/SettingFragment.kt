@@ -4,18 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
 import com.developer_rahul.docunova.DriveServiceHelper
 import com.developer_rahul.docunova.HelpSupportActivity
@@ -27,34 +22,51 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.api.services.drive.DriveScopes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 class SettingFragment : Fragment() {
 
     companion object {
-        private const val TAG = "SettingFragment"
-        private const val SUPABASE_URL = "https://grtzvwunaxlcbhqncizo.supabase.co"
-        private const val SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdydHp2d3VuYXhsY2JocW5jaXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4ODU3NDEsImV4cCI6MjA4NDQ2MTc0MX0.-W7GdFb_r8hFIFXEFUIEXHhqb01e-nDjBN_ZZl75dQ0"
         private const val APP_URL = "https://docunova-smart-scanner.netlify.app/"
+        private const val PREFS_SETTINGS = "DocuNovaSettings"
+        private const val PREF_AUTO_CROP = "pref_auto_crop"
+        private const val PREF_HD_ENHANCE = "pref_hd_enhance"
     }
 
     private lateinit var tvUsername: TextView
     private lateinit var tvUserEmail: TextView
-    private lateinit var tvPrivacy: TextView
-    private lateinit var tvSecurity: TextView
-    private lateinit var tvSupport: TextView
+    private lateinit var tvPrivacy: View
+    private lateinit var tvSecurity: View
+    private lateinit var tvSupport: View
     private lateinit var tvDriveFilesCount: TextView
     private lateinit var tvDriveStorage: TextView
     private lateinit var profileImage: ImageView
-    private lateinit var btnLogOut: Button
-    private lateinit var btnShare: Button
-    private lateinit var btnRateApp: Button
+    private lateinit var btnLogOut: MaterialButton
+    private lateinit var btnShare: View
+    private lateinit var btnRateApp: View
+    private lateinit var switchAutoCrop: SwitchMaterial
+    private lateinit var switchEnhance: SwitchMaterial
+    private lateinit var rowClearCache: View
+    private lateinit var tvCacheSize: TextView
+
     private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var driveSignInLauncher: androidx.activity.result.ActivityResultLauncher<Intent>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        driveSignInLauncher = registerForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+        ) {
+            loadDriveInfo()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -86,23 +98,47 @@ class SettingFragment : Fragment() {
         btnShare = view.findViewById(R.id.btnShare)
         btnRateApp = view.findViewById(R.id.btnRateApp)
 
+        // Preferences & Storage views
+        switchAutoCrop = view.findViewById(R.id.switchAutoCrop)
+        switchEnhance = view.findViewById(R.id.switchEnhance)
+        rowClearCache = view.findViewById(R.id.rowClearCache)
+        tvCacheSize = view.findViewById(R.id.tvCacheSize)
+
+        // Setup preferences
+        setupPreferences()
+
         // Fetch and display user details
         fetchUserDetails()
 
         // Load Google Drive information
         loadDriveInfo()
 
+        // Update cache size
+        updateCacheSize()
+
         btnLogOut.setOnClickListener {
-            logout()
+            val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+            val loginMethod = prefs.getString("login_method", null)
+            if (loginMethod == "guest") {
+                val intent = Intent(requireContext(), LoginActivity::class.java).apply {
+                    putExtra("force_show_login", true)
+                }
+                startActivity(intent)
+            } else {
+                showLogoutConfirmation()
+            }
         }
+
         tvPrivacy.setOnClickListener {
             val i = Intent(requireContext(), Privacy_Policy_Activity::class.java)
             startActivity(i)
         }
+
         tvSecurity.setOnClickListener {
             val i = Intent(requireContext(), SecurityActivity::class.java)
             startActivity(i)
         }
+
         tvSupport.setOnClickListener {
             val i = Intent(requireContext(), HelpSupportActivity::class.java)
             startActivity(i)
@@ -115,16 +151,73 @@ class SettingFragment : Fragment() {
         btnRateApp.setOnClickListener {
             openUrl(APP_URL)
         }
+
+        rowClearCache.setOnClickListener {
+            clearCache()
+        }
+    }
+
+    private fun setupPreferences() {
+        val prefs = requireContext().getSharedPreferences(PREFS_SETTINGS, Context.MODE_PRIVATE)
+        switchAutoCrop.isChecked = prefs.getBoolean(PREF_AUTO_CROP, true)
+        switchEnhance.isChecked = prefs.getBoolean(PREF_HD_ENHANCE, true)
+
+        switchAutoCrop.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(PREF_AUTO_CROP, isChecked).apply()
+        }
+
+        switchEnhance.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(PREF_HD_ENHANCE, isChecked).apply()
+        }
+    }
+
+    private fun updateCacheSize() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val size = calculateCacheSize()
+            val formatted = DriveServiceHelper.formatFileSize(size)
+            withContext(Dispatchers.Main) {
+                tvCacheSize.text = formatted
+            }
+        }
+    }
+
+    private fun calculateCacheSize(): Long {
+        return try {
+            var total = 0L
+            requireContext().cacheDir?.walkTopDown()?.forEach { file ->
+                if (file.isFile) total += file.length()
+            }
+            total
+        } catch (e: Exception) {
+            0L
+        }
+    }
+
+    private fun clearCache() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                requireContext().cacheDir?.deleteRecursively()
+                requireContext().cacheDir?.mkdirs()
+                withContext(Dispatchers.Main) {
+                    tvCacheSize.text = "0 B"
+                    Toast.makeText(requireContext(), "Temporary cache cleared successfully", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Failed to clear cache", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     private fun shareApp() {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Docunova Smart Scanner")
-            val shareMessage = "Check out Docunova Smart Scanner to scan and manage your documents: $APP_URL"
+            putExtra(Intent.EXTRA_SUBJECT, "DocuNova - Smart Document Scanner")
+            val shareMessage = "Check out DocuNova Smart Scanner to scan, translate, and securely back up documents: $APP_URL"
             putExtra(Intent.EXTRA_TEXT, shareMessage)
         }
-        startActivity(Intent.createChooser(shareIntent, "Share via"))
+        startActivity(Intent.createChooser(shareIntent, "Share DocuNova via"))
     }
 
     private fun openUrl(url: String) {
@@ -149,7 +242,7 @@ class SettingFragment : Fragment() {
                         totalSize += file.size
                     }
 
-                    val sizeFormatted = formatFileSize(totalSize)
+                    val sizeFormatted = DriveServiceHelper.formatFileSize(totalSize)
 
                     withContext(Dispatchers.Main) {
                         tvDriveFilesCount.text = files.size.toString()
@@ -158,106 +251,85 @@ class SettingFragment : Fragment() {
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         tvDriveFilesCount.text = "Error"
-                        tvDriveStorage.text = "Failed to load"
+                        tvDriveStorage.text = "Tap to Reconnect"
                     }
                 }
             }
         } else {
             tvDriveFilesCount.text = "0"
-            tvDriveStorage.text = "Drive not linked"
+            tvDriveStorage.text = "Connect Drive"
+        }
+
+        tvDriveStorage.setOnClickListener {
+            connectOrReconnectDrive()
         }
     }
 
-    private fun formatFileSize(bytes: Long): String {
-        if (bytes < 1024) return "$bytes B"
-        var value = bytes.toDouble()
-        val units = arrayOf("KB", "MB", "GB", "TB")
-        var unitIndex = 0
-
-        while (value >= 1024 && unitIndex < units.size - 1) {
-            value /= 1024
-            unitIndex++
-        }
-
-        return String.format("%.1f %s", value, units[unitIndex])
+    private fun connectOrReconnectDrive() {
+        val driveGso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestScopes(Scope(DriveScopes.DRIVE_FILE))
+            .build()
+        val client = GoogleSignIn.getClient(requireContext(), driveGso)
+        driveSignInLauncher.launch(client.signInIntent)
     }
 
     private fun fetchUserDetails() {
         val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
         val loginMethod = prefs.getString("login_method", null)
-        val accessToken = prefs.getString("access_token", null)
+        val googleAccount = GoogleSignIn.getLastSignedInAccount(requireContext())
+        val name = googleAccount?.displayName ?: prefs.getString("full_name", if (loginMethod == "guest") "Local User" else "User")
+        val email = googleAccount?.email ?: prefs.getString("email", if (loginMethod == "guest") "Offline Mode (Local Storage)" else "No Email")
+        val avatar = googleAccount?.photoUrl?.toString() ?: prefs.getString("avatar_url", null)
 
-        // 1. Show cached info immediately
-        val cachedEmail = prefs.getString("email", "No Email")
-        val cachedName = prefs.getString("full_name", cachedEmail)
-        tvUsername.text = cachedName
-        tvUserEmail.text = cachedEmail
+        tvUsername.text = name
+        tvUserEmail.text = email
 
-        val cachedAvatar = if (loginMethod == "google") {
-            prefs.getString("google_avatar_url", null)
+        if (loginMethod == "guest") {
+            btnLogOut.text = "Sign in with Google"
+            btnLogOut.setIconResource(R.drawable.ic_google)
+            btnLogOut.iconTint = null
+            btnLogOut.setTextColor(android.graphics.Color.parseColor("#2563EB"))
+            btnLogOut.strokeColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#BFDBFE"))
+            btnLogOut.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#EFF6FF"))
         } else {
-            prefs.getString("avatar_url", null)
+            btnLogOut.text = "Sign Out of Account"
+            btnLogOut.setIconResource(R.drawable.ic_logout_24)
+            btnLogOut.iconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#DC2626"))
+            btnLogOut.setTextColor(android.graphics.Color.parseColor("#DC2626"))
+            btnLogOut.strokeColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FCA5A5"))
+            btnLogOut.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FEF2F2"))
         }
 
-        if (!cachedAvatar.isNullOrEmpty()) {
+        if (!avatar.isNullOrEmpty()) {
             Glide.with(requireContext())
-                .load(cachedAvatar)
+                .load(avatar)
                 .placeholder(R.drawable.ic_profile)
                 .into(profileImage)
         }
-
-        // 2. Fetch fresh data if login method is email
-        if (loginMethod == "email" && !accessToken.isNullOrEmpty()) {
-            val url = "$SUPABASE_URL/auth/v1/user"
-            val request = object : JsonObjectRequest(
-                Method.GET, url, null,
-                { response -> handleSupabaseUserResponse(response) },
-                { error -> Log.e(TAG, "Supabase profile fetch error", error) }
-            ) {
-                override fun getHeaders(): MutableMap<String, String> {
-                    return hashMapOf(
-                        "apikey" to SUPABASE_API_KEY,
-                        "Authorization" to "Bearer $accessToken",
-                        "Accept" to "application/json"
-                    )
-                }
-            }
-            Volley.newRequestQueue(requireContext()).add(request)
-        }
     }
 
-    private fun handleSupabaseUserResponse(response: JSONObject) {
-        try {
-            val email = response.optString("email", "No Email")
-            val metadata = response.optJSONObject("user_metadata")
-            val fullName = metadata?.optString("full_name") ?: email
-            val avatarUrl = metadata?.optString("avatar_url") ?: ""
-
-            tvUsername.text = fullName
-            tvUserEmail.text = email
-
-            if (avatarUrl.isNotEmpty()) {
-                Glide.with(requireContext())
-                    .load(avatarUrl)
-                    .placeholder(R.drawable.ic_profile)
-                    .into(profileImage)
+    private fun showLogoutConfirmation() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Sign Out")
+            .setMessage("Are you sure you want to sign out? Your scanned documents will remain safe in local and cloud storage.")
+            .setPositiveButton("Sign Out") { dialog, _ ->
+                dialog.dismiss()
+                logout()
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing user response", e)
-        }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun logout() {
         val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val loginMethod = prefs.getString("login_method", null)
-
         prefs.edit().clear().apply()
 
-        if (loginMethod == "google") {
-            googleSignInClient.signOut().addOnCompleteListener {
-                navigateToLogin()
-            }
-        } else {
+        DriveServiceHelper.clearDriveSession()
+
+        googleSignInClient.signOut().addOnCompleteListener {
             navigateToLogin()
         }
     }
@@ -267,5 +339,11 @@ class SettingFragment : Fragment() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         requireActivity().finish()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadDriveInfo()
+        updateCacheSize()
     }
 }

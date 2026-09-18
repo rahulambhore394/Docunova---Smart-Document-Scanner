@@ -6,14 +6,32 @@ local.properties
 .idea/
 **/.idea/
 .DS_Store
+Thumbs.db
 build/
 **/build/
 captures/
 .externalNativeBuild
 .cxx
+
+# Security & Credentials
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+*.pk8
+secrets.properties
+**/secrets.properties
+google-services.json
+**/google-services.json
+*.env
+*.env.*
+*.credentials.json
+
+# Build outputs & packages
 *.aab
 *.apk
 app/release/*.aab
 app/release/*.apk
 *.log
-

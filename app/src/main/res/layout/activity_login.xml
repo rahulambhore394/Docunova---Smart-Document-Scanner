@@ -1,138 +1,400 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#F8F9FF">
+    android:scrollbars="none"
+    android:background="#F8FAFC">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:padding="24dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="24dp">
 
-        <!-- Top Icon -->
-        <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_marginTop="40dp"
-            android:src="@drawable/app_icon"
-            android:background="@drawable/circle_background"
-             />
+        <!-- App Logo Card -->
+        <FrameLayout
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:background="@drawable/bg_app_logo_card"
+            android:elevation="4dp"
+            android:padding="14dp">
 
-        <!-- Title -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/app_icon"
+                android:contentDescription="@string/app_name" />
+        </FrameLayout>
+
+        <!-- App Title -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Welcome Back"
-            android:textSize="24sp"
+            android:text="@string/app_name"
+            android:textSize="32sp"
             android:textStyle="bold"
-            android:textColor="#000"
-            android:layout_marginTop="24dp" />
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#0F172A"
+            android:letterSpacing="0.01"
+            android:layout_marginTop="16dp" />
 
+        <!-- Brand Pill Badge -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sign in to continue scanning"
-            android:textSize="14sp"
-            android:textColor="#666"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_pill_badge_blue"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:text="SMART AI DOCUMENT HUB"
+            android:textColor="#2563EB"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Effortlessly scan, extract text, translate, and organize your documents with real-time cloud backup."
+            android:textSize="13sp"
+            android:textColor="#64748B"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginTop="10dp"
             android:layout_marginBottom="24dp" />
 
-        <!-- Card -->
+        <!-- Feature Bento Row Highlights -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/card_background"
             android:orientation="vertical"
-            android:elevation="4dp"
-            android:padding="20dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp">
+            android:background="@drawable/bg_modern_card"
+            android:elevation="2dp"
+            android:padding="18dp"
+            android:layout_marginBottom="20dp">
 
-            <!-- Email -->
-            <EditText
-                android:id="@+id/etEmail"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Enter your email"
-                android:drawableStart="@drawable/ic_email"
-                android:drawablePadding="12dp"
-                android:background="@drawable/edittext_bg"
-                android:paddingStart="16dp"
-                android:inputType="textEmailAddress"
-                android:layout_marginBottom="16dp" />
-
-            <!-- Password -->
-            <EditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Enter your password"
-                android:drawableStart="@drawable/ic_password"
-                android:drawableEnd="@drawable/ic_eye"
-                android:drawablePadding="12dp"
-                android:layout_marginEnd="10dp"
-                android:background="@drawable/edittext_bg"
-                android:paddingStart="16dp"
-                android:inputType="textPassword"
-                android:layout_marginBottom="16dp" />
-
-            <!-- Sign In Button -->
-            <Button
-                android:id="@+id/btnSignIn"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:text="Sign In"
-                android:textColor="#FFF"
-                android:backgroundTint="#4D6EF7"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Divider -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="OR CONTINUE WITH"
-                android:gravity="center"
-                android:textColor="#999"
-                android:textSize="12sp"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Google Button -->
+            <!-- Feature 1: Smart Cam Scan -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:id="@+id/btn_continueWithGoogle"
-                android:background="@drawable/edittext_bg"
-                android:gravity="center_vertical"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingStart="16dp">
+                android:gravity="center_vertical">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_google"
-                    android:layout_marginStart="50dp"/>
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_squircle_blue">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_nav_camera_24"
+                        app:tint="#2563EB"
+                        android:contentDescription="Camera Scan" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Continue with Google"
-                    android:textSize="14sp"
-                    android:layout_marginStart="10dp"
-                    android:textColor="#000" />
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Edge Auto-Detect Scanner"
+                        android:textColor="#0F172A"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ultra HD scans with intelligent auto-crop"
+                        android:textColor="#64748B"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F1F5F9"
+                android:layout_marginVertical="12dp" />
+
+            <!-- Feature 2: OCR & Translate -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_squircle_purple">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_ocr_scan_24"
+                        app:tint="#7C3AED"
+                        android:contentDescription="OCR" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Instant OCR &amp; Translation"
+                        android:textColor="#0F172A"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Extract text &amp; translate into 20+ languages"
+                        android:textColor="#64748B"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F1F5F9"
+                android:layout_marginVertical="12dp" />
+
+            <!-- Feature 3: Cloud Storage -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_squircle_emerald">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_cloud_sync_24"
+                        app:tint="#059669"
+                        android:contentDescription="Cloud Sync" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Google Drive Cloud Sync"
+                        android:textColor="#0F172A"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Secure encrypted backup directly to Drive"
+                        android:textColor="#64748B"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Bottom Text -->
+        <!-- Auth Action Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_modern_card"
+            android:orientation="vertical"
+            android:elevation="3dp"
+            android:padding="22dp"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Get Started"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="#0F172A" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connect your Google account to scan, manage, and sync documents across all your devices."
+                android:textSize="13sp"
+                android:textColor="#64748B"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Google Sign-In Button -->
+            <LinearLayout
+                android:id="@+id/btn_continueWithGoogle"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:background="@drawable/bg_google_btn"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="1dp"
+                android:paddingHorizontal="16dp">
+
+                <ImageView
+                    android:id="@+id/ivGoogleIcon"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_google"
+                    android:contentDescription="Google" />
+
+                <TextView
+                    android:id="@+id/tvGoogleBtnText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Continue with Google"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginStart="12dp"
+                    android:textColor="#0F172A" />
+
+                <ProgressBar
+                    android:id="@+id/pbGoogleLogin"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:indeterminate="true"
+                    android:visibility="gone"
+                    android:layout_marginStart="10dp"
+                    android:indeterminateTint="#2563EB" />
+            </LinearLayout>
+
+            <!-- Or Divider -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginVertical="12dp">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="#E2E8F0" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="OR"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#94A3B8"
+                    android:layout_marginHorizontal="12dp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="#E2E8F0" />
+            </LinearLayout>
+
+            <!-- Continue as Guest Button -->
+            <LinearLayout
+                android:id="@+id/btn_continueAsGuest"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_option_selector"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingHorizontal="16dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_nav_camera_24"
+                    app:tint="#2563EB"
+                    android:contentDescription="Guest" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Use Offline without Sign-In"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginStart="10dp"
+                    android:textColor="#1E293B" />
+            </LinearLayout>
+
+            <!-- Trust Badge -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="14dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_shield_check_24"
+                    app:tint="#10B981"
+                    android:contentDescription="Security" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="256-bit Encrypted • Direct Google Drive Sync"
+                    android:textColor="#64748B"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Terms / Privacy Note -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/createAccount"
-            android:text="Don't have an account? Sign up"
-            android:textColor="#4D6EF7"
-            android:textSize="14sp"
-            android:layout_marginBottom="24dp" />
+            android:text="By continuing, you agree to DocuNova's Terms and Privacy Policy"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
     </LinearLayout>
 </ScrollView>

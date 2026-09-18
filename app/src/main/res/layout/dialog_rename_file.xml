@@ -1,21 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@drawable/bg_dialog_rounded"
+    android:padding="24dp">
 
-    <com.google.android.material.textfield.TextInputLayout
+    <!-- Header with Squircle Badge -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="File name">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/renameInput"
-            android:layout_width="match_parent"
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_squircle_amber">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_edit"
+                app:tint="#D97706"
+                android:contentDescription="Rename" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:maxLines="1" />
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rename Document"
+                android:textColor="#0F172A"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Update the file name in Cloud Vault"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="NEW FILE NAME"
+        android:textColor="#64748B"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.06"
+        android:layout_marginBottom="8dp" />
+
+    <!-- File Name Input Container -->
+    <EditText
+        android:id="@+id/renameInput"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:hint="Enter file name"
+        android:inputType="text"
+        android:maxLines="1"
+        android:textColor="#0F172A"
+        android:textColorHint="#94A3B8"
+        android:background="@drawable/bg_modern_edittext"
+        android:paddingHorizontal="16dp"
+        android:textSize="15sp"
+        android:fontFamily="sans-serif-medium"
+        android:drawableStart="@drawable/ic_documents_stack_24"
+        android:drawablePadding="12dp"
+        android:drawableTint="#64748B" />
+
+    <!-- Hint note -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:src="@drawable/ic_cloud_sync_24"
+            app:tint="#2563EB"
+            android:contentDescription="Sync" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="Changes will sync across all connected devices"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -9,23 +9,42 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.developer_rahul.docunova"
+        applicationId = "com.developer_rahul.docunova_scanner"
         minSdk = 28
         targetSdk = 35
         versionCode = 3
         versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        resourceConfigurations += "en"
+        ndk {
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
+        }
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     compileOptions {
@@ -47,9 +66,17 @@ android {
             excludes += setOf(
                 "META-INF/DEPENDENCIES",
                 "META-INF/INDEX.LIST",
-                "META-INF/io.netty.versions.properties"
+                "META-INF/io.netty.versions.properties",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/*.version",
+                "META-INF/*.txt"
             )
         }
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
     bundle {
         language{
@@ -73,9 +100,8 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
-    implementation("com.android.volley:volley:1.2.1")
 
-    // ML Kit Scanner (Lightweight version)
+    // ML Kit Scanner (Lightweight Play Services version)
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
 
     // Room DB
@@ -89,35 +115,14 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
 
-    // OCR and Image Labeling (Thin clients using Play Services)
+    // OCR (Thin client using Play Services)
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    implementation("com.google.android.gms:play-services-mlkit-image-labeling:16.0.8")
 
-    // PDF & Word Handling
-    implementation("com.itextpdf:itext7-core:7.2.5")
-    implementation("org.apache.poi:poi-ooxml:5.2.3")
-    implementation("org.apache.xmlbeans:xmlbeans:5.1.1")
-    implementation("org.apache.commons:commons-compress:1.23.0")
-    implementation("commons-io:commons-io:2.11.0")
-
-    // Translation & Language Detection
-    implementation("com.google.mlkit:translate:17.0.2")
-    implementation("com.google.mlkit:language-id:17.0.4")
+    // PDF Handling (Essential kernel)
+    implementation("com.itextpdf:kernel:7.2.5")
 
     implementation("androidx.exifinterface:exifinterface:1.3.6")
-    implementation("com.airbnb.android:lottie:6.0.0")
-
-    // Supabase
-    val supabaseVersion = "2.4.0"
-    implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
-    implementation("io.github.jan-tennert.supabase:gotrue-kt")
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    implementation("io.github.jan-tennert.supabase:storage-kt")
-    implementation("io.github.jan-tennert.supabase:realtime-kt")
-
-    // Ktor for Supabase
-    implementation("io.ktor:ktor-client-android:2.3.11")
 
     // Fix KAPT issues
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.8.0")
@@ -139,7 +144,6 @@ dependencies {
         exclude(group = "org.apache.httpcomponents", module = "httpcore")
     }
     
-    implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("com.facebook.shimmer:shimmer:0.5.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")

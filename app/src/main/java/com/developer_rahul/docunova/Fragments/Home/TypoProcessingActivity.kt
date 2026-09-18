@@ -13,6 +13,7 @@ import android.graphics.*
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
@@ -25,6 +26,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -39,8 +41,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.developer_rahul.docunova.BuildConfig
 import com.developer_rahul.docunova.DriveServiceHelper
+import com.developer_rahul.docunova.MainActivity
 import com.developer_rahul.docunova.R
 import com.developer_rahul.docunova.ProcessingDialog
+import com.developer_rahul.docunova.RoomDB.AppDatabase
+import com.developer_rahul.docunova.RoomDB.RecentFile
+import com.developer_rahul.docunova.utils.StorageUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
@@ -57,7 +63,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import org.apache.poi.xwpf.usermodel.XWPFDocument
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -65,6 +70,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.roundToInt
 
 class TypoProcessingActivity : AppCompatActivity() {
 
@@ -72,9 +78,9 @@ class TypoProcessingActivity : AppCompatActivity() {
     private lateinit var container: FrameLayout
     private lateinit var fileNameTextView: TextView
     private lateinit var extractedTextEditText: EditText
-    private lateinit var copyButton: Button
-    private lateinit var formatButton: Button
-    private lateinit var saveButton: Button
+    private lateinit var copyButton: View
+    private lateinit var formatButton: View
+    private lateinit var saveButton: View
     private lateinit var recentImagesRecycler: RecyclerView
     private lateinit var processingDialog: ProcessingDialog
 
@@ -88,12 +94,14 @@ class TypoProcessingActivity : AppCompatActivity() {
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private var currentExtractionJob: Job? = null
     private val isProcessing = AtomicBoolean(false)
+    private var isShowingConvertLayout = false
 
-    // Google Drive Integration
+    // Google Drive & Local Storage
     private lateinit var driveSignInOptions: GoogleSignInOptions
     private var driveService: Drive? = null
     private var pendingFileName: String? = null
     private var pendingFileBytes: ByteArray? = null
+    private var pendingLocalFileId: Int? = null
     private var selectedFormat: String = "PDF"
 
     companion object {
@@ -101,7 +109,7 @@ class TypoProcessingActivity : AppCompatActivity() {
         const val REQUEST_DOCUMENT = 101
         const val REQUEST_STORAGE_PERMISSION = 102
         const val REQUEST_DRIVE_SIGN_IN = 2001
-        private const val MAX_IMAGE_DIMENSION = 1000
+        private const val MAX_IMAGE_DIMENSION = 2560
         private const val MAX_RECENT_IMAGES = 16
         private const val INDENT_PER_LEVEL = 30
     }
@@ -125,7 +133,7 @@ class TypoProcessingActivity : AppCompatActivity() {
         ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && currentPhotoPath != null) {
-            selectedFileUri = Uri.fromFile(File(currentPhotoPath))
+            selectedFileUri = Uri.fromFile(File(currentPhotoPath!!))
             showConvertLayout(selectedFileUri!!, "image/jpeg")
         }
     }
@@ -148,7 +156,8 @@ class TypoProcessingActivity : AppCompatActivity() {
             initializeDriveService()
             uploadFileToDrive()
         } else {
-            Toast.makeText(this, "Google Drive sign-in failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "File saved locally!", Toast.LENGTH_SHORT).show()
+            jumpToHome()
         }
     }
 
@@ -165,7 +174,29 @@ class TypoProcessingActivity : AppCompatActivity() {
             .build()
 
         initializeDriveService()
-        showUploadLayout()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isShowingConvertLayout) {
+                    showUploadLayout()
+                } else {
+                    finish()
+                }
+            }
+        })
+
+        val incomingUri = intent.data ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(Intent.EXTRA_STREAM)
+        }
+        if (incomingUri != null) {
+            val mimeType = contentResolver.getType(incomingUri)
+            showConvertLayout(incomingUri, mimeType)
+        } else {
+            showUploadLayout()
+        }
     }
 
     private fun initializeDriveService() {
@@ -184,9 +215,14 @@ class TypoProcessingActivity : AppCompatActivity() {
     }
 
     private fun showUploadLayout() {
+        isShowingConvertLayout = false
         val uploadView = layoutInflater.inflate(R.layout.layout_upload_files_for_extract, null)
         container.removeAllViews()
         container.addView(uploadView)
+
+        uploadView.findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
+            finish()
+        }
 
         recentImagesRecycler = uploadView.findViewById(R.id.recentImagesRecycler)
         recentImagesRecycler.layoutManager = GridLayoutManager(this, 4)
@@ -362,7 +398,6 @@ class TypoProcessingActivity : AppCompatActivity() {
                 .load(uri)
                 .placeholder(R.drawable.ic_placeholder)
                 .centerCrop()
-                .thumbnail(0.1f)
                 .into(holder.imageView)
 
             holder.itemView.setOnClickListener { onItemClick(uri) }
@@ -372,9 +407,14 @@ class TypoProcessingActivity : AppCompatActivity() {
     }
 
     private fun showConvertLayout(uri: Uri, mimeType: String?) {
+        isShowingConvertLayout = true
         val convertView = layoutInflater.inflate(R.layout.activity_typo_proccessing, null)
         container.removeAllViews()
         container.addView(convertView)
+
+        convertView.findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
+            showUploadLayout()
+        }
 
         // Initialize UI components
         fileNameTextView = convertView.findViewById(R.id.editTextDocumentName)
@@ -382,6 +422,33 @@ class TypoProcessingActivity : AppCompatActivity() {
         copyButton = convertView.findViewById(R.id.btnCopyText)
         formatButton = convertView.findViewById(R.id.btnFormatText)
         saveButton = convertView.findViewById(R.id.btnSave)
+        val tvWordCharCount = convertView.findViewById<TextView>(R.id.tvExtractWordCharCount)
+
+        fun updateWordCharCount(text: CharSequence?) {
+            val s = text?.toString() ?: ""
+            val trimmed = s.trim()
+            val words = if (trimmed.isEmpty()) 0 else trimmed.split(Regex("\\s+")).size
+            tvWordCharCount?.text = "$words words • ${s.length} chars"
+        }
+
+        extractedTextEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                updateWordCharCount(s)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        convertView.findViewById<View>(R.id.btnShareText)?.setOnClickListener {
+            val text = extractedTextEditText.text.toString()
+            if (text.isNotEmpty()) {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+                startActivity(Intent.createChooser(shareIntent, "Share Extracted Text"))
+            }
+        }
 
         // Set file data
         selectedFileUri = uri
@@ -426,6 +493,20 @@ class TypoProcessingActivity : AppCompatActivity() {
         }
     }
 
+    private data class SpatialSegment(
+        val text: String,
+        val box: Rect
+    )
+
+    private data class SpatialRow(
+        val segments: MutableList<SpatialSegment> = mutableListOf(),
+        var top: Int = 0,
+        var bottom: Int = 0
+    ) {
+        val centerY: Float get() = (top + bottom) / 2f
+        val height: Int get() = (bottom - top).coerceAtLeast(1)
+    }
+
     private suspend fun extractTextFromImage(uri: Uri) {
         try {
             val options = BitmapFactory.Options().apply {
@@ -447,17 +528,279 @@ class TypoProcessingActivity : AppCompatActivity() {
             val image = InputImage.fromBitmap(rotatedBitmap, 0)
             val result = textRecognizer.process(image).await()
 
+            val formattedText = formatExtractedTextExactLayout(result)
+
             withContext(Dispatchers.Main) {
-                // Improve layout by grouping into blocks
-                val sb = StringBuilder()
-                for (block in result.textBlocks) {
-                    sb.append(block.text).append("\n\n")
-                }
-                extractedTextEditText.setText(sb.toString().trim())
+                extractedTextEditText.setText(formattedText)
             }
         } catch (e: Exception) {
             throw IOException("Failed to process image: ${e.message}")
         }
+    }
+
+    /**
+     * Extracts text preserving exact 2D spatial layout (columns, tables, receipts, indentation, paragraph breaks)
+     */
+    private fun formatExtractedTextExactLayout(textResult: com.google.mlkit.vision.text.Text): String {
+        if (textResult.textBlocks.isEmpty()) return ""
+
+        // Check if the document has multi-column flowing prose (e.g. newspaper or research paper)
+        if (isMultiColumnArticle(textResult)) {
+            return formatMultiColumnArticle(textResult)
+        }
+
+        val segments = extractSpatialSegments(textResult)
+        if (segments.isEmpty()) {
+            return textResult.text.trim()
+        }
+
+        return formatSpatialGrid(segments)
+    }
+
+    /**
+     * Extracts spatial segments from text blocks. Separates lines where wide gaps exist
+     * into distinct column segments so table columns and key-value fields align accurately.
+     */
+    private fun extractSpatialSegments(textResult: com.google.mlkit.vision.text.Text): List<SpatialSegment> {
+        val segments = mutableListOf<SpatialSegment>()
+
+        // Estimate character width to identify wide gaps within lines
+        val lineEstimates = mutableListOf<Float>()
+        for (block in textResult.textBlocks) {
+            for (line in block.lines) {
+                val box = line.boundingBox
+                if (box != null && line.text.length > 2 && box.width() > 0) {
+                    lineEstimates.add(box.width().toFloat() / line.text.length)
+                }
+            }
+        }
+        val approxCharWidth = if (lineEstimates.isNotEmpty()) {
+            lineEstimates.sorted()[lineEstimates.size / 2].coerceAtLeast(1f)
+        } else {
+            12f
+        }
+
+        for (block in textResult.textBlocks) {
+            for (line in block.lines) {
+                val lineBox = line.boundingBox ?: continue
+                if (line.text.isBlank()) continue
+
+                val elements = line.elements
+                if (elements.size <= 1) {
+                    segments.add(SpatialSegment(line.text.trim(), lineBox))
+                } else {
+                    var currentClusterText = StringBuilder()
+                    var clusterLeft = -1
+                    var clusterTop = lineBox.top
+                    var clusterRight = -1
+                    var clusterBottom = lineBox.bottom
+                    var prevElementRight = -1
+
+                    for (elem in elements) {
+                        val elemBox = elem.boundingBox ?: continue
+                        if (elem.text.isBlank()) continue
+
+                        val gap = if (prevElementRight != -1) elemBox.left - prevElementRight else 0
+
+                        if (prevElementRight != -1 && gap > approxCharWidth * 2.5f) {
+                            if (currentClusterText.isNotBlank()) {
+                                segments.add(
+                                    SpatialSegment(
+                                        currentClusterText.toString().trim(),
+                                        Rect(clusterLeft, clusterTop, clusterRight, clusterBottom)
+                                    )
+                                )
+                            }
+                            currentClusterText = StringBuilder(elem.text)
+                            clusterLeft = elemBox.left
+                            clusterTop = elemBox.top
+                            clusterRight = elemBox.right
+                            clusterBottom = elemBox.bottom
+                        } else {
+                            if (currentClusterText.isEmpty()) {
+                                currentClusterText.append(elem.text)
+                                clusterLeft = elemBox.left
+                                clusterTop = elemBox.top
+                                clusterRight = elemBox.right
+                                clusterBottom = elemBox.bottom
+                            } else {
+                                currentClusterText.append(" ").append(elem.text)
+                                clusterRight = maxOf(clusterRight, elemBox.right)
+                                clusterTop = minOf(clusterTop, elemBox.top)
+                                clusterBottom = maxOf(clusterBottom, elemBox.bottom)
+                            }
+                        }
+                        prevElementRight = elemBox.right
+                    }
+
+                    if (currentClusterText.isNotBlank()) {
+                        segments.add(
+                            SpatialSegment(
+                                currentClusterText.toString().trim(),
+                                Rect(clusterLeft, clusterTop, clusterRight, clusterBottom)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        return segments
+    }
+
+    /**
+     * Formats spatial segments into a 2D text grid matching the exact layout of the source.
+     */
+    private fun formatSpatialGrid(segments: List<SpatialSegment>): String {
+        if (segments.isEmpty()) return ""
+
+        val docLeft = segments.minOf { it.box.left }
+        val docRight = segments.maxOf { it.box.right }
+
+        val heights = segments.map { it.box.height().coerceAtLeast(1) }.sorted()
+        val medianLineHeight = heights[heights.size / 2].toFloat()
+
+        val charWidthEstimates = segments.mapNotNull { seg ->
+            if (seg.text.length > 1 && seg.box.width() > 0) {
+                seg.box.width().toFloat() / seg.text.length
+            } else null
+        }.sorted()
+
+        val medianCharWidth = if (charWidthEstimates.isNotEmpty()) {
+            charWidthEstimates[charWidthEstimates.size / 2].coerceIn(4f, 60f)
+        } else {
+            (medianLineHeight * 0.5f).coerceIn(4f, 60f)
+        }
+
+        val sortedSegments = segments.sortedWith(compareBy({ it.box.top }, { it.box.left }))
+
+        val rows = mutableListOf<SpatialRow>()
+        for (seg in sortedSegments) {
+            var bestRow: SpatialRow? = null
+            var maxOverlap = 0
+
+            for (row in rows) {
+                val overlap = maxOf(0, minOf(row.bottom, seg.box.bottom) - maxOf(row.top, seg.box.top))
+                val minH = minOf(row.height, seg.box.height())
+                val centerDist = Math.abs(row.centerY - seg.box.centerY().toFloat())
+
+                val matchesRow = (overlap >= 0.38f * minH) || (centerDist <= 0.35f * medianLineHeight)
+                if (matchesRow && overlap >= maxOverlap) {
+                    maxOverlap = overlap
+                    bestRow = row
+                }
+            }
+
+            if (bestRow != null) {
+                bestRow.segments.add(seg)
+                bestRow.top = minOf(bestRow.top, seg.box.top)
+                bestRow.bottom = maxOf(bestRow.bottom, seg.box.bottom)
+            } else {
+                rows.add(SpatialRow(mutableListOf(seg), seg.box.top, seg.box.bottom))
+            }
+        }
+
+        rows.sortBy { it.top }
+
+        val sb = StringBuilder()
+        var previousRowBottom: Int? = null
+
+        for (row in rows) {
+            if (previousRowBottom != null) {
+                val verticalGap = row.top - previousRowBottom
+                if (verticalGap > medianLineHeight * 1.35f) {
+                    val emptyLines = ((verticalGap / medianLineHeight).toInt() - 1).coerceIn(1, 2)
+                    repeat(emptyLines) {
+                        sb.append("\n")
+                    }
+                }
+            }
+
+            row.segments.sortBy { it.box.left }
+
+            val rowBuilder = StringBuilder()
+            var currentCursorX = docLeft
+
+            for (i in row.segments.indices) {
+                val seg = row.segments[i]
+                val segLeft = seg.box.left
+
+                if (i == 0) {
+                    val indentPx = segLeft - docLeft
+                    if (indentPx > medianCharWidth * 1.5f) {
+                        val numSpaces = (indentPx / medianCharWidth).roundToInt().coerceIn(1, 80)
+                        rowBuilder.append(" ".repeat(numSpaces))
+                        currentCursorX = segLeft
+                    }
+                } else {
+                    val gapPx = segLeft - currentCursorX
+                    if (gapPx > medianCharWidth * 0.75f) {
+                        val spaceCount = (gapPx / medianCharWidth).roundToInt().coerceIn(1, 80)
+                        rowBuilder.append(" ".repeat(spaceCount))
+                    } else {
+                        if (rowBuilder.isNotEmpty() && !rowBuilder.endsWith(" ")) {
+                            rowBuilder.append(" ")
+                        }
+                    }
+                }
+
+                rowBuilder.append(seg.text.trim())
+                currentCursorX = maxOf(currentCursorX, seg.box.right)
+            }
+
+            sb.append(rowBuilder.toString().trimEnd()).append("\n")
+            previousRowBottom = row.bottom
+        }
+
+        return sb.toString().trimEnd()
+    }
+
+    private fun isMultiColumnArticle(textResult: com.google.mlkit.vision.text.Text): Boolean {
+        val blocks = textResult.textBlocks
+        if (blocks.size < 2) return false
+
+        for (i in 0 until blocks.size - 1) {
+            val b1 = blocks[i]
+            val r1 = b1.boundingBox ?: continue
+
+            for (j in i + 1 until blocks.size) {
+                val b2 = blocks[j]
+                val r2 = b2.boundingBox ?: continue
+
+                val horizontalGap = if (r1.right < r2.left) r2.left - r1.right else if (r2.right < r1.left) r1.left - r2.right else -1
+                if (horizontalGap < 0) continue
+
+                val vOverlap = maxOf(0, minOf(r1.bottom, r2.bottom) - maxOf(r1.top, r2.top))
+                val minH = minOf(r1.height(), r2.height())
+                if (minH <= 0 || vOverlap.toFloat() / minH < 0.6f) continue
+
+                if (b1.lines.size >= 4 && b2.lines.size >= 4) {
+                    val avgLen1 = b1.lines.map { it.text.length }.average()
+                    val avgLen2 = b2.lines.map { it.text.length }.average()
+                    if (avgLen1 > 30 && avgLen2 > 30) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun formatMultiColumnArticle(textResult: com.google.mlkit.vision.text.Text): String {
+        val sortedBlocks = textResult.textBlocks.sortedWith(compareBy({ it.boundingBox?.left ?: 0 }, { it.boundingBox?.top ?: 0 }))
+        val sb = StringBuilder()
+
+        for (block in sortedBlocks) {
+            val blockLines = block.lines.mapNotNull { line ->
+                val box = line.boundingBox
+                if (box != null && line.text.isNotBlank()) SpatialSegment(line.text.trim(), box) else null
+            }
+            if (blockLines.isNotEmpty()) {
+                val formattedBlock = formatSpatialGrid(blockLines)
+                sb.append(formattedBlock).append("\n\n")
+            }
+        }
+        return sb.toString().trimEnd()
     }
 
     private fun calculateInSampleSize(
@@ -482,20 +825,26 @@ class TypoProcessingActivity : AppCompatActivity() {
 
     private fun rotateBitmapIfRequired(bitmap: Bitmap, uri: Uri): Bitmap {
         return try {
-            contentResolver.openInputStream(uri)?.use { input ->
-                val exif = ExifInterface(input)
-                val orientation = exif.getAttributeInt(
+            val orientation = if (uri.scheme == "file" && uri.path != null) {
+                ExifInterface(uri.path!!).getAttributeInt(
                     ExifInterface.TAG_ORIENTATION,
                     ExifInterface.ORIENTATION_NORMAL
                 )
+            } else {
+                contentResolver.openInputStream(uri)?.use { input ->
+                    ExifInterface(input).getAttributeInt(
+                        ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_NORMAL
+                    )
+                } ?: ExifInterface.ORIENTATION_NORMAL
+            }
 
-                when (orientation) {
-                    ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
-                    ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
-                    ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
-                    else -> bitmap
-                }
-            } ?: bitmap
+            when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
+                ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
+                ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
+                else -> bitmap
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error rotating bitmap", e)
             bitmap
@@ -516,7 +865,7 @@ class TypoProcessingActivity : AppCompatActivity() {
         }
 
         try {
-            // First try with iText
+            var extractedWithIText = false
             try {
                 contentResolver.openInputStream(uri)?.use { inputStream ->
                     val pdfReader = PdfReader(inputStream)
@@ -531,20 +880,25 @@ class TypoProcessingActivity : AppCompatActivity() {
                         stringBuilder.append(text).append("\n\n")
                     }
 
-                    withContext(Dispatchers.Main) {
-                        extractedTextEditText.setText(stringBuilder.toString())
-                    }
-
                     pdfDocument.close()
                     pdfReader.close()
-                    return
+
+                    val resultText = stringBuilder.toString().trim()
+                    if (resultText.length >= 30) {
+                        withContext(Dispatchers.Main) {
+                            extractedTextEditText.setText(resultText)
+                        }
+                        extractedWithIText = true
+                        return
+                    }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "iText extraction failed, falling back to OCR")
+                Log.w(TAG, "iText extraction failed or scanned PDF, falling back to OCR", e)
             }
 
-            // Fallback to OCR
-            fallbackToPdfOcr(parcelFileDescriptor)
+            if (!extractedWithIText) {
+                fallbackToPdfOcr(parcelFileDescriptor)
+            }
         } finally {
             try {
                 parcelFileDescriptor.close()
@@ -583,13 +937,14 @@ class TypoProcessingActivity : AppCompatActivity() {
                     page.render(bitmap, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     val inputImage = InputImage.fromBitmap(bitmap, 0)
                     val result = textRecognizer.process(inputImage).await()
-                    stringBuilder.append(result.text).append("\n\n")
+                    val pageFormatted = formatExtractedTextExactLayout(result)
+                    stringBuilder.append(pageFormatted).append("\n\n")
                     bitmap.recycle()
                 }
             }
 
             withContext(Dispatchers.Main) {
-                extractedTextEditText.setText(stringBuilder.toString())
+                extractedTextEditText.setText(stringBuilder.toString().trim())
             }
 
             pdfRenderer.close()
@@ -599,13 +954,13 @@ class TypoProcessingActivity : AppCompatActivity() {
     }
 
     private fun calculateOptimalScale(pageWidth: Int, pageHeight: Int): Float {
-        val maxWidth = 1200
-        val maxHeight = 1600
+        val targetWidth = 2200f
+        val targetHeight = 3000f
 
-        val widthScale = maxWidth.toFloat() / pageWidth
-        val heightScale = maxHeight.toFloat() / pageHeight
+        val widthScale = targetWidth / pageWidth.toFloat()
+        val heightScale = targetHeight / pageHeight.toFloat()
 
-        return minOf(widthScale, heightScale, 1.0f).coerceAtLeast(0.1f)
+        return minOf(widthScale, heightScale).coerceIn(1.5f, 3.5f)
     }
 
     private fun copyTextToClipboard() {
@@ -632,51 +987,38 @@ class TypoProcessingActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.Default) {
             try {
-                // Relaxed cleaning to preserve potential alignment
-                val cleanedText = rawText
-                    .replace("(\\s*\\n){3,}".toRegex(), "\n\n")
-                    .trim()
-
-                val paragraphs = cleanedText.split("\n\n").map { it.trim() }
+                val lines = rawText.split("\n")
                 val formattedText = SpannableStringBuilder()
-                var currentListType: ListType? = null
-                var listCounter = 1
-                var isFirstParagraph = true
 
-                for (paragraph in paragraphs) {
-                    if (paragraph.isBlank()) continue
+                for (idx in lines.indices) {
+                    val line = lines[idx]
+                    val trimmed = line.trim()
+                    val startLinePos = formattedText.length
 
-                    val paragraphType = when {
-                        isHeading(paragraph) -> ParagraphType.HEADING
-                        isSubheading(paragraph) -> ParagraphType.SUBHEADING
-                        isList(paragraph) -> ParagraphType.LIST
-                        else -> ParagraphType.NORMAL
+                    if (trimmed.isEmpty()) {
+                        formattedText.append("\n")
+                        continue
                     }
 
-                    if (paragraphType != ParagraphType.LIST) {
-                        currentListType = null
-                        listCounter = 1
-                    }
+                    formattedText.append(line).append("\n")
 
-                    if (!isFirstParagraph) {
-                        formattedText.append("\n\n")
-                    }
-
-                    when (paragraphType) {
-                        ParagraphType.HEADING -> formatHeading(formattedText, paragraph)
-                        ParagraphType.SUBHEADING -> formatSubheading(formattedText, paragraph)
-                        ParagraphType.LIST -> {
-                            val detectedListType = detectListType(paragraph)
-                            if (currentListType != detectedListType) {
-                                listCounter = 1
-                                currentListType = detectedListType
+                    if (isHeading(trimmed)) {
+                        val trimmedStart = line.indexOf(trimmed)
+                        val hStart = startLinePos + trimmedStart
+                        val hEnd = hStart + trimmed.length
+                        formattedText.setSpan(StyleSpan(Typeface.BOLD), hStart, hEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        formattedText.setSpan(RelativeSizeSpan(1.2f), hStart, hEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    } else {
+                        val colonIndex = trimmed.indexOf(':')
+                        if (colonIndex in 1..25) {
+                            val key = trimmed.substring(0, colonIndex + 1)
+                            val kStart = line.indexOf(key)
+                            if (kStart != -1) {
+                                val s = startLinePos + kStart
+                                formattedText.setSpan(StyleSpan(Typeface.BOLD), s, s + key.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                             }
-                            listCounter = formatList(formattedText, paragraph, detectedListType, listCounter)
                         }
-                        ParagraphType.NORMAL -> formatNormalParagraph(formattedText, paragraph)
                     }
-
-                    isFirstParagraph = false
                 }
 
                 withContext(Dispatchers.Main) {
@@ -697,59 +1039,6 @@ class TypoProcessingActivity : AppCompatActivity() {
         }
     }
 
-    private enum class ParagraphType { HEADING, SUBHEADING, LIST, NORMAL }
-    private enum class ListType { BULLET, NUMBERED }
-
-    private fun isList(text: String): Boolean {
-        val listPatterns = listOf(
-            Regex("^(\\s*)([•\\-*]|\\d+[.)])\\s+"),
-            Regex("\\n(\\s*)([•\\-*]|\\d+[.)])\\s+")
-        )
-        return listPatterns.any { it.containsMatchIn(text) }
-    }
-
-    private fun detectListType(text: String): ListType {
-        val numberedPattern = Regex("(^|\\n)\\s*\\d+[.)]")
-        return if (numberedPattern.containsMatchIn(text)) ListType.NUMBERED else ListType.BULLET
-    }
-
-    private fun formatList(
-        builder: SpannableStringBuilder,
-        text: String,
-        listType: ListType,
-        startCounter: Int
-    ): Int {
-        val lines = text.split("\n")
-        var counter = startCounter
-
-        for (line in lines) {
-            if (line.isBlank()) continue
-
-            val listItemPattern = Regex("^(\\s*)([•\\-*]|\\d+[.)])\\s+")
-            val matchResult = listItemPattern.find(line)
-            val indentLevel = matchResult?.groups?.get(1)?.value?.length ?: 0
-            val indentSize = INDENT_PER_LEVEL * (indentLevel / 2 + 1)
-
-            val content = line.replace(listItemPattern, "").trim()
-            val start = builder.length
-
-            when (listType) {
-                ListType.BULLET -> builder.append("• ")
-                ListType.NUMBERED -> builder.append("${counter++}. ")
-            }
-
-            builder.append(content)
-            builder.append("\n")
-            val end = builder.length
-
-            builder.setSpan(
-                LeadingMarginSpan.Standard(indentSize, 0),
-                start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-        return counter
-    }
-
     private fun isHeading(text: String): Boolean {
         val wordCount = text.split("\\s+".toRegex()).size
         return wordCount in 1..7 &&
@@ -757,39 +1046,6 @@ class TypoProcessingActivity : AppCompatActivity() {
                 !text.endsWith(":") &&
                 text.any { it.isUpperCase() } &&
                 text.length < 120
-    }
-
-    private fun isSubheading(text: String): Boolean {
-        val wordCount = text.split("\\s+".toRegex()).size
-        return wordCount in 3..15 &&
-                (text.endsWith(":") || text.endsWith("-")) &&
-                text.length < 200
-    }
-
-    private fun formatHeading(builder: SpannableStringBuilder, text: String) {
-        val start = builder.length
-        builder.append(text)
-        val end = builder.length
-
-        builder.setSpan(StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        builder.setSpan(RelativeSizeSpan(1.4f), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    }
-
-    private fun formatSubheading(builder: SpannableStringBuilder, text: String) {
-        val start = builder.length
-        builder.append(text)
-        val end = builder.length
-
-        builder.setSpan(StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        builder.setSpan(RelativeSizeSpan(1.2f), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    }
-
-    private fun formatNormalParagraph(builder: SpannableStringBuilder, text: String) {
-        val start = builder.length
-        builder.append(text)
-        val end = builder.length
-
-        builder.setSpan(LeadingMarginSpan.Standard(INDENT_PER_LEVEL, 0), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
     private fun saveEditedText() {
@@ -909,22 +1165,23 @@ class TypoProcessingActivity : AppCompatActivity() {
         val color = ContextCompat.getColor(context, colorRes)
         
         if (isSelected) {
-            val lightColor = ColorUtils.blendARGB(color, Color.WHITE, 0.9f)
+            val lightColor = ColorUtils.blendARGB(color, Color.WHITE, 0.92f)
+            val strokeWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2f, resources.displayMetrics).toInt()
             val drawable = GradientDrawable().apply {
-                cornerRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12f, resources.displayMetrics)
+                cornerRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16f, resources.displayMetrics)
                 setColor(lightColor)
-                setStroke(4, color)
+                setStroke(strokeWidth, color)
             }
             container.background = drawable
             icon.setColorFilter(color)
             text.setTextColor(color)
             checkMark.visibility = View.VISIBLE
-            ViewCompat.setElevation(container, 8f)
+            ViewCompat.setElevation(container, 4f)
         } else {
             val drawable = ContextCompat.getDrawable(context, R.drawable.bg_option_selector)
             container.background = drawable
             icon.setColorFilter(ContextCompat.getColor(context, R.color.gray_700))
-            text.setTextColor(ContextCompat.getColor(context, R.color.black))
+            text.setTextColor(Color.parseColor("#0F172A"))
             checkMark.visibility = View.GONE
             ViewCompat.setElevation(container, 0f)
         }
@@ -947,14 +1204,50 @@ class TypoProcessingActivity : AppCompatActivity() {
                     else -> createTextFile(content.toString())
                 }
 
+                val fileExtension = when (selectedFormat) {
+                    "PDF" -> ".pdf"
+                    "WORD" -> ".docx"
+                    else -> ".txt"
+                }
+                val mimeType = when (selectedFormat) {
+                    "PDF" -> "application/pdf"
+                    "WORD" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    else -> "text/plain"
+                }
+
+                val fullFileName = "$pendingFileName$fileExtension"
+
+                // 1. Save locally to Docunova storage
+                val storageDir = StorageUtils.getDocunovaStorageDir(this@TypoProcessingActivity)
+                val localSavedFile = File(storageDir, fullFileName)
+                FileOutputStream(localSavedFile).use { fos ->
+                    fos.write(fileBytes)
+                }
+
+                // 2. Insert into local Room database
+                val account = GoogleSignIn.getLastSignedInAccount(this@TypoProcessingActivity)
+                val userId = account?.email ?: "local_user"
+                val recentFile = RecentFile(
+                    userId = userId,
+                    name = fullFileName,
+                    filePath = localSavedFile.absolutePath,
+                    mimeType = mimeType,
+                    date = StorageUtils.getCurrentDate(),
+                    size = localSavedFile.length(),
+                    isSynced = false,
+                    uploadStatus = "PENDING"
+                )
+                val localId = AppDatabase.getDatabase(this@TypoProcessingActivity).recentFileDao().insert(recentFile)
+
                 withContext(Dispatchers.Main) {
                     pendingFileBytes = fileBytes
+                    pendingLocalFileId = localId.toInt()
                     ensureDriveAccountThenUpload()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     processingDialog.dismiss()
-                    Toast.makeText(this@TypoProcessingActivity, "Error preparing file", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@TypoProcessingActivity, "Error saving file: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -964,16 +1257,26 @@ class TypoProcessingActivity : AppCompatActivity() {
         val pdfDocument = android.graphics.pdf.PdfDocument()
         val paint = TextPaint().apply {
             color = Color.BLACK
-            textSize = 12f
+            textSize = 10f
+            typeface = Typeface.MONOSPACE
             isAntiAlias = true
         }
         
         val pageWidth = 595 // A4 width in pts
         val pageHeight = 842 // A4 height in pts
-        val margin = 40f
+        val margin = 36f
+        val textWidth = (pageWidth - margin * 2).toInt()
         
-        val layout = StaticLayout(content, paint, pageWidth - (margin * 2).toInt(), 
-            Layout.Alignment.ALIGN_NORMAL, 1.2f, 0f, false)
+        val layout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            StaticLayout.Builder.obtain(content, 0, content.length, paint, textWidth)
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setLineSpacing(0f, 1.2f)
+                .setIncludePad(false)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            StaticLayout(content, paint, textWidth, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0f, false)
+        }
         
         var currentLine = 0
         var pageNum = 1
@@ -1007,43 +1310,12 @@ class TypoProcessingActivity : AppCompatActivity() {
     }
 
     private fun createWordFile(content: CharSequence): ByteArray {
-        val doc = XWPFDocument()
-        val paragraphs = content.split("\n\n")
-        
-        for (pText in paragraphs) {
-            val paragraph = doc.createParagraph()
-            if (content is Spanned) {
-                // Find sub-spans within this paragraph part
-                val pStart = content.toString().indexOf(pText)
-                if (pStart != -1) {
-                    val pEnd = pStart + pText.length
-                    var i = pStart
-                    while (i < pEnd) {
-                        val next = content.nextSpanTransition(i, pEnd, Object::class.java)
-                        val run = paragraph.createRun()
-                        run.setText(content.subSequence(i, next).toString())
-                        
-                        val spans = content.getSpans(i, next, Object::class.java)
-                        for (span in spans) {
-                            when (span) {
-                                is StyleSpan -> if (span.style == Typeface.BOLD) run.isBold = true
-                                is RelativeSizeSpan -> run.fontSize = (12 * span.sizeChange).toInt()
-                            }
-                        }
-                        i = next
-                    }
-                } else {
-                    paragraph.createRun().setText(pText)
-                }
-            } else {
-                paragraph.createRun().setText(pText)
-            }
+        return try {
+            com.developer_rahul.docunova.DocxHelper.createDocx(content)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Error generating DOCX via DocxHelper", t)
+            content.toString().toByteArray(Charsets.UTF_8)
         }
-
-        val stream = ByteArrayOutputStream()
-        doc.write(stream)
-        doc.close()
-        return stream.toByteArray()
     }
 
     private fun createTextFile(text: String): ByteArray = text.toByteArray()
@@ -1082,25 +1354,45 @@ class TypoProcessingActivity : AppCompatActivity() {
                 val tempFile = File(cacheDir, fileName)
                 FileOutputStream(tempFile).use { it.write(pendingFileBytes!!) }
 
-                DriveServiceHelper.uploadFileToAppFolder(
+                val fileId = DriveServiceHelper.uploadFileToAppFolder(
                     driveService,
                     this@TypoProcessingActivity,
                     Uri.fromFile(tempFile),
                     fileName
                 )
 
+                if (fileId != null && pendingLocalFileId != null) {
+                    AppDatabase.getDatabase(this@TypoProcessingActivity).recentFileDao().updateDriveInfo(
+                        pendingLocalFileId!!,
+                        fileId,
+                        null,
+                        "UPLOADED"
+                    )
+                }
+
                 withContext(Dispatchers.Main) {
                     processingDialog.dismiss()
-                    Toast.makeText(this@TypoProcessingActivity, "File uploaded successfully!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@TypoProcessingActivity, "Saved to device & synced to Google Drive!", Toast.LENGTH_LONG).show()
                     tempFile.delete()
+                    jumpToHome()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     processingDialog.dismiss()
-                    Toast.makeText(this@TypoProcessingActivity, "Upload failed", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@TypoProcessingActivity, "Saved to device! Drive upload failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    jumpToHome()
                 }
             }
         }
+    }
+
+    private fun jumpToHome() {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("NAVIGATE_TO_HOME", true)
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun openDocumentPicker() {

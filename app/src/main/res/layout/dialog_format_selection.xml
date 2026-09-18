@@ -7,35 +7,63 @@
     android:background="@drawable/bg_dialog_rounded"
     android:padding="24dp">
 
+    <!-- Header with Squircle Badge -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="16dp">
 
-        <View
-            android:layout_width="4dp"
-            android:layout_height="24dp"
-            android:background="@color/blue_500" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_squircle_blue">
 
-        <TextView
-            android:layout_width="wrap_content"
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_documents_stack_24"
+                app:tint="#2563EB"
+                android:contentDescription="Export Format" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:text="Choose Export Format"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Export Format"
+                android:textColor="#0F172A"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select document output type"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Select the file type you want to generate and upload to your cloud storage."
-        android:textColor="@color/gray_600"
-        android:textSize="14sp"
-        android:layout_marginBottom="24dp"/>
+        android:text="SELECT FORMAT"
+        android:textColor="#64748B"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.06"
+        android:layout_marginBottom="12dp" />
 
     <!-- PDF Option -->
     <LinearLayout
@@ -45,7 +73,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:background="@drawable/bg_option_selector"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="10dp"
         android:gravity="center_vertical"
         android:clickable="true"
         android:focusable="true">
@@ -55,30 +83,52 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:src="@drawable/ic_pdf"
-            android:layout_marginEnd="16dp"
-            app:tint="@color/pdf_color" />
+            app:tint="@color/pdf_color"
+            android:contentDescription="PDF" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="14dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/text_pdf"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PDF Document"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/text_pdf"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PDF Document"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_pill_badge_blue"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="RECOMMENDED"
+                    android:textColor="#2563EB"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Best for sharing and printing"
-                android:textColor="@color/gray_600"
-                android:textSize="12sp" />
+                android:text="Best for sharing, archiving and printing"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp" />
         </LinearLayout>
 
         <ImageView
@@ -87,7 +137,8 @@
             android:layout_height="22dp"
             android:src="@drawable/ic_check_circle"
             android:visibility="gone"
-            app:tint="@color/blue_500" />
+            app:tint="#2563EB"
+            android:contentDescription="Selected" />
 
     </LinearLayout>
 
@@ -99,7 +150,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:background="@drawable/bg_option_selector"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="10dp"
         android:gravity="center_vertical"
         android:clickable="true"
         android:focusable="true">
@@ -109,30 +160,52 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:src="@drawable/ic_word"
-            android:layout_marginEnd="16dp"
-            app:tint="@color/word_color" />
+            app:tint="@color/word_color"
+            android:contentDescription="Word" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="14dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/text_word"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Word Document"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/text_word"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Word Document"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_format_tag"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text=".DOCX"
+                    android:textColor="#475569"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Fully editable .docx format"
-                android:textColor="@color/gray_600"
-                android:textSize="12sp" />
+                android:text="Fully editable Microsoft Word document"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp" />
         </LinearLayout>
 
         <ImageView
@@ -141,7 +214,8 @@
             android:layout_height="22dp"
             android:src="@drawable/ic_check_circle"
             android:visibility="gone"
-            app:tint="@color/blue_500" />
+            app:tint="#2563EB"
+            android:contentDescription="Selected" />
 
     </LinearLayout>
 
@@ -153,7 +227,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:background="@drawable/bg_option_selector"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="20dp"
         android:gravity="center_vertical"
         android:clickable="true"
         android:focusable="true">
@@ -163,30 +237,52 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:src="@drawable/ic_text"
-            android:layout_marginEnd="16dp"
-            app:tint="@color/text_color" />
+            app:tint="@color/text_color"
+            android:contentDescription="Text" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="14dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/text_text"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Plain Text"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/text_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Plain Text"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_format_tag"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text=".TXT"
+                    android:textColor="#475569"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Simple .txt file with raw text"
-                android:textColor="@color/gray_600"
-                android:textSize="12sp" />
+                android:text="Simple .txt file with clean raw text"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp" />
         </LinearLayout>
 
         <ImageView
@@ -195,22 +291,25 @@
             android:layout_height="22dp"
             android:src="@drawable/ic_check_circle"
             android:visibility="gone"
-            app:tint="@color/blue_500" />
+            app:tint="#2563EB"
+            android:contentDescription="Selected" />
 
     </LinearLayout>
 
-    <!-- Continue Button -->
+    <!-- Confirm Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_confirm"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Confirm &amp; Upload"
+        android:layout_height="54dp"
+        android:text="Confirm &amp; Export"
         android:textAllCaps="false"
         android:textColor="@android:color/white"
         app:cornerRadius="16dp"
-        android:textSize="16sp"
+        android:textSize="15sp"
+        android:fontFamily="sans-serif-medium"
         android:textStyle="bold"
-        android:backgroundTint="@color/blue_500"
+        android:backgroundTint="#2563EB"
+        app:elevation="2dp"
         app:rippleColor="@color/ripple_effect_color" />
 
 </LinearLayout>

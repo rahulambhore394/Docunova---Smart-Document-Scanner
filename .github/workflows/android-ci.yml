@@ -1,0 +1,81 @@
+name: Android CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-check:
+    name: Security & Credential Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Scan for Exposed Keystores & Private Keys
+        run: |
+          echo "Scanning workspace for prohibited credential and key files..."
+          FOUND_KEYS=$(find . -type f \( -name "*.jks" -o -name "*.keystore" -o -name "*.p12" -o -name "*.pfx" -o -name "*.pk8" -o -name "secrets.properties" \) | grep -v "/\.gradle/" | grep -v "/build/" || true)
+          if [ -n "$FOUND_KEYS" ]; then
+            echo "::error::Prohibited private key or credential file found in repository:"
+            echo "$FOUND_KEYS"
+            exit 1
+          fi
+          echo "Security Check Passed: No sensitive keys or credentials detected."
+
+  build-and-test:
+    name: Test & Build Release Binaries
+    needs: security-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant Execute Permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testReleaseUnitTest --stacktrace
+
+      - name: Build Release APK & Bundle (AAB)
+        run: ./gradlew assembleRelease bundleRelease --stacktrace
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: docunova-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Release AAB (App Bundle)
+        uses: actions/upload-artifact@v4
+        with:
+          name: docunova-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: app/build/reports/tests/
+          retention-days: 7

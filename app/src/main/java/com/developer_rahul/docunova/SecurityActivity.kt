@@ -23,39 +23,15 @@ class SecurityActivity : AppCompatActivity() {
 
     private fun setSecurityInfo() {
         val securityText = """
-            Security is a top priority in the design and development of DocuScan. The application implements multiple layers of protection to ensure the confidentiality, integrity, and availability of user data.
+            Security Architecture & Compliance Standards:
 
-            1. Authentication & Access Control
-            - User authentication is handled via Supabase Authentication (Google Sign-In / Email).
-            - Each user account is protected with JWT (JSON Web Token)–based sessions.
-            - Role-based access control (RBAC) ensures that only authenticated users can access their own documents.
+            DocuNova is engineered with a strict privacy-first foundation. The application implements multi-layered security measures to guarantee the confidentiality, integrity, and availability of all user documents.
 
-            2. Data Storage Security
-            - On-device storage: Documents remain on the device until explicitly uploaded.
-            - Supabase Storage: Uploaded documents are stored in secure, private buckets accessible only to the authenticated user.
-            - Google Drive: When users choose cloud backup, files are stored in an app-specific folder within the user’s Google Drive. The app cannot access other user files.
-
-            3. Data Transmission Security
-            - All data transferred between the app, Supabase, and Google services is protected using HTTPS (TLS 1.2/1.3 encryption).
-            - Tokens and sensitive information are never transmitted in plain text.
-
-            4. Encryption & Protection
-            - Supabase uses AES-256 encryption at rest and TLS encryption in transit to secure stored data.
-            - Google Drive also provides end-to-end encryption for all uploaded files.
-            - Sensitive user identifiers (name, email) are stored securely in Supabase Database.
-
-            5. API & Service Security
-            - API keys for Supabase, Google Drive API, and Translation API are stored securely and are not exposed in the client code.
-            - Rate limiting and validation mechanisms are applied to prevent misuse of APIs.
-
-            6. User Privacy & Control
-            - Users have full control over their documents and can delete files from Supabase or Google Drive at any time.
-            - Profile details (name, email, profile photo) are used only for account identification and in-app display.
-            - No personal data is shared or sold to third parties.
-
-            7. Regular Monitoring & Updates
-            - Supabase and Google Cloud provide built-in logging and monitoring to detect unusual activity.
-            - The app is updated regularly to patch vulnerabilities and ensure compliance with the latest security standards.
+            • Authentication & Access: Secure Google Sign-In with OAuth 2.0 PKCE flow. Each session token is cryptographically validated with Google Identity services.
+            • Cloud Storage Isolation: Cloud backups are stored strictly in an app-isolated folder within your personal Google Drive. DocuNova cannot read, modify, or list any other files in your Drive.
+            • Cryptography: Documents are protected at rest via AES-256 bit encryption and in transit via TLS 1.3 encrypted HTTPS channels.
+            • Machine Learning: Document edge detection, enhancement, and OCR processing run on-device using ML Kit edge models.
+            • Zero Commercial Exploitation: Your documents are never indexed, analyzed for telemetry, or shared with third parties.
         """.trimIndent()
 
         binding.tvSecurityInfo.text = securityText

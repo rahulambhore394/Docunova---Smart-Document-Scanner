@@ -25,10 +25,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
 import com.developer_rahul.docunova.Adapters.RecentFileAdapter
 import com.developer_rahul.docunova.DriveServiceHelper
@@ -61,15 +57,14 @@ import com.developer_rahul.docunova.Fragments.Files.FilesFragment
 import com.developer_rahul.docunova.Fragments.Setting.SettingFragment
 //import com.developer_rahul.docunova.TranslationActivity
 //import com.developer_rahul.docunova.TypoProcessingActivity
+import android.graphics.Color
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class HomeFragment : Fragment() {
 
     private val TAG = "HomeFragment"
-    private val SUPABASE_URL = "https://grtzvwunaxlcbhqncizo.supabase.co"
-    private val SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdydHp2d3VuYXhsY2JocW5jaXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4ODU3NDEsImV4cCI6MjA4NDQ2MTc0MX0.-W7GdFb_r8hFIFXEFUIEXHhqb01e-nDjBN_ZZl75dQ0"
-    private val SUPABASE_STORAGE_URL = "$SUPABASE_URL/storage/v1"
-    private val BUCKET_NAME = "user-documents"
+
     private lateinit var driveAdapter: FileAdapter
 
     private lateinit var tvTotalFiles: TextView
@@ -83,17 +78,50 @@ class HomeFragment : Fragment() {
     private lateinit var layoutStorageData: View
 
     private var scanner: GmsDocumentScanner? = null
-    private var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>? = null
+
+    private val scannerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            handleScanResult(result.data)
+        }
+    }
+
+    private val googleDriveSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            if (account != null) {
+                val localF = pendingLocalFile
+                val recId = pendingFileRecordId
+                val name = pendingDriveFileName
+                if (localF != null && recId != null && name != null) {
+                    uploadLocalFileToDrive(account, localF, recId, name)
+                } else {
+                    loadDriveFiles()
+                }
+                retryPendingUploads()
+            }
+        } catch (e: ApiException) {
+            pendingLocalFile = null
+            pendingFileRecordId = null
+            pendingDriveFileName = null
+        }
+    }
 
     private lateinit var recyclerView: RecyclerView
     private val adapter by lazy {
-        RecentFileAdapter(emptyList()) { file ->
-            if (file.filePath.isNotEmpty()) {
-                openDocumentFromSupabase(file)
-            } else {
-                downloadDocument(file)
+        RecentFileAdapter(
+            emptyList(),
+            onItemClick = { recentFile ->
+                openRecentFile(recentFile)
+            },
+            onMoreClick = { recentFile, _ ->
+                showRecentFileOptionsMenu(recentFile)
             }
-        }
+        )
     }
     private lateinit var db: AppDatabase
 
@@ -101,7 +129,6 @@ class HomeFragment : Fragment() {
     private lateinit var profileImage: ImageView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
-    private lateinit var googleDriveSignInLauncher: ActivityResultLauncher<Intent>
     private val driveGso by lazy {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
@@ -109,7 +136,8 @@ class HomeFragment : Fragment() {
             .build()
     }
     private val driveSignInClient by lazy { GoogleSignIn.getClient(requireContext(), driveGso) }
-    private var pendingPdfUri: Uri? = null
+    private var pendingLocalFile: File? = null
+    private var pendingFileRecordId: Int? = null
     private var pendingDriveFileName: String? = null
 
     override fun onCreateView(
@@ -159,45 +187,47 @@ class HomeFragment : Fragment() {
         // Initial Drive load attempt
         autoLinkDrive()
 
-        fetchUserDocumentsFromSupabase()
         setupSwipeRefresh()
+    }
 
-        googleDriveSignInLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                if (account != null) {
-                    val uri = pendingPdfUri
-                    val name = pendingDriveFileName
-                    if (uri != null && name != null) {
-                        uploadToDrive(account, uri, name)
-                    } else {
-                        loadDriveFiles()
-                    }
-                }
-            } catch (e: ApiException) {
-                pendingPdfUri = null
-                pendingDriveFileName = null
-            }
-        }
+    private fun getCurrentUserId(): String {
+        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+        return account?.id ?: account?.email ?: "default_user"
     }
 
     private fun autoLinkDrive() {
         val account = GoogleSignIn.getLastSignedInAccount(requireContext())
         if (account != null && GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_FILE))) {
             loadDriveFiles()
+            retryPendingUploads()
         } else {
             driveSignInClient.silentSignIn().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     loadDriveFiles()
+                    retryPendingUploads()
                 } else {
                     tvTotalFiles.text = "0"
                     tvTotalSize.text = "Drive not linked"
                     stopShimmers()
                 }
             }
+        }
+    }
+
+    private fun retryPendingUploads() {
+        val account = GoogleSignIn.getLastSignedInAccount(requireContext()) ?: return
+        if (!GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_FILE))) return
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val pendingFiles = db.recentFileDao().getPendingUploads(getCurrentUserId())
+                for (pending in pendingFiles) {
+                    val file = File(pending.filePath)
+                    if (file.exists()) {
+                        uploadLocalFileToDrive(account, file, pending.id, pending.name)
+                    }
+                }
+            } catch (ignored: Exception) {}
         }
     }
 
@@ -227,21 +257,29 @@ class HomeFragment : Fragment() {
         recyclerView.visibility = View.VISIBLE
     }
 
-    private fun uploadToDrive(account: GoogleSignInAccount, uri: Uri, name: String) {
+    private fun uploadLocalFileToDrive(account: GoogleSignInAccount, localFile: File, recordId: Int, fileName: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                db.recentFileDao().updateUploadStatus(recordId, "UPLOADING")
                 val drive = DriveServiceHelper.buildService(requireContext(), account.email!!)
-                DriveServiceHelper.uploadFileToAppFolder(drive, requireContext(), uri, "$name.pdf")
+                val driveFileId = DriveServiceHelper.uploadLocalFile(drive, localFile, fileName, "application/pdf")
+                val folderId = DriveServiceHelper.getSubfolderForMimeType(drive, "application/pdf")
+
+                db.recentFileDao().updateDriveInfo(recordId, driveFileId, folderId, "UPLOADED")
+
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Uploaded to Drive", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Uploaded to Google Drive", Toast.LENGTH_SHORT).show()
                     loadDriveFiles()
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Drive upload failed", e)
+                db.recentFileDao().updateUploadStatus(recordId, "FAILED")
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Drive upload failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Upload pending (offline or error)", Toast.LENGTH_SHORT).show()
                 }
             } finally {
-                pendingPdfUri = null
+                pendingLocalFile = null
+                pendingFileRecordId = null
                 pendingDriveFileName = null
             }
         }
@@ -251,65 +289,295 @@ class HomeFragment : Fragment() {
         swipeRefreshLayout.setOnRefreshListener {
             lifecycleScope.launch {
                 autoLinkDrive()
-                fetchUserDocumentsFromSupabase()
                 swipeRefreshLayout.isRefreshing = false
             }
         }
     }
 
     private fun openDriveFile(file: DriveFileModel) {
-        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
-        if (account != null && GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_FILE))) {
-            if (isGoogleDriveAppInstalled()) {
-                try {
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://drive.google.com/file/d/${file.id}/view")
-                        setPackage("com.google.android.apps.docs")
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    openFileInBrowser(file)
-                }
-            } else {
-                openFileInBrowser(file)
+        val intent = com.developer_rahul.docunova.DocumentViewerActivity.createIntent(
+            context = requireContext(),
+            fileId = file.id,
+            fileName = file.name,
+            mimeType = file.mimeType
+        )
+        startActivity(intent)
+    }
+
+    private fun openRecentFile(recentFile: RecentFile) {
+        val intent = com.developer_rahul.docunova.DocumentViewerActivity.createIntent(
+            context = requireContext(),
+            fileId = recentFile.driveFileId,
+            fileName = recentFile.name,
+            mimeType = recentFile.mimeType.takeIf { it.isNotEmpty() } ?: "application/pdf",
+            localPath = recentFile.filePath.takeIf { it.isNotEmpty() }
+        )
+        startActivity(intent)
+    }
+
+    private fun showRecentFileOptionsMenu(recentFile: RecentFile) {
+        val dialog = BottomSheetDialog(requireContext())
+        val sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_file_options, null)
+        dialog.setContentView(sheetView)
+
+        val tvSheetFileName = sheetView.findViewById<TextView>(R.id.tvSheetFileName)
+        val tvSheetFileDetails = sheetView.findViewById<TextView>(R.id.tvSheetFileDetails)
+        val ivSheetFileIcon = sheetView.findViewById<ImageView>(R.id.ivSheetFileIcon)
+
+        tvSheetFileName.text = recentFile.name
+        val formattedSize = if (recentFile.size > 0) DriveServiceHelper.formatFileSize(recentFile.size) else ""
+        tvSheetFileDetails.text = if (formattedSize.isNotEmpty() && recentFile.date.isNotEmpty()) {
+            "$formattedSize • ${recentFile.date}"
+        } else formattedSize.ifEmpty { recentFile.date }
+
+        val ext = recentFile.name.substringAfterLast('.', "").lowercase()
+        when (ext) {
+            "pdf" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_pdf)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#EF4444"))
             }
+            "doc", "docx" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_word)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#2563EB"))
+            }
+            "txt" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_text)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#10B981"))
+            }
+            "jpg", "jpeg", "png" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_scanned_files)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#8B5CF6"))
+            }
+            else -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_documents_stack_24)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#2563EB"))
+            }
+        }
+
+        sheetView.findViewById<View>(R.id.actionSheetShare).setOnClickListener {
+            dialog.dismiss()
+            shareRecentFile(recentFile)
+        }
+
+        sheetView.findViewById<View>(R.id.actionSheetRename).setOnClickListener {
+            dialog.dismiss()
+            renameRecentFile(recentFile)
+        }
+
+        sheetView.findViewById<View>(R.id.actionSheetDelete).setOnClickListener {
+            dialog.dismiss()
+            deleteRecentFile(recentFile)
+        }
+
+        dialog.show()
+    }
+
+    private fun shareRecentFile(recentFile: RecentFile) {
+        val file = File(recentFile.filePath)
+        if (file.exists()) {
+            try {
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.fileprovider",
+                    file
+                )
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = recentFile.mimeType.takeIf { it.isNotEmpty() } ?: "application/pdf"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(Intent.createChooser(shareIntent, "Share Document"))
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Could not share file: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        } else if (!recentFile.driveFileId.isNullOrEmpty()) {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, recentFile.name)
+                putExtra(Intent.EXTRA_TEXT, "https://drive.google.com/file/d/${recentFile.driveFileId}/view")
+            }
+            startActivity(Intent.createChooser(shareIntent, "Share Document"))
         } else {
-            googleDriveSignInLauncher.launch(driveSignInClient.signInIntent)
+            Toast.makeText(requireContext(), "File not available locally", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun openFileInBrowser(file: DriveFileModel) {
-        val url = "https://drive.google.com/file/d/${file.id}/view"
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Cannot open file", Toast.LENGTH_SHORT).show()
+    private fun renameRecentFile(recentFile: RecentFile) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_rename_file, null)
+        val editText = dialogView.findViewById<EditText>(R.id.renameInput)
+        editText.setText(recentFile.name)
+        val dotIndex = recentFile.name.lastIndexOf('.')
+        if (dotIndex > 0) {
+            editText.setSelection(0, dotIndex)
+        } else {
+            editText.selectAll()
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .setPositiveButton("Rename") { _, _ ->
+                val newName = editText.text.toString().trim()
+                if (newName.isNotEmpty() && newName != recentFile.name) {
+                    performRenameRecentFile(recentFile, newName)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun performRenameRecentFile(recentFile: RecentFile, newName: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                var updatedPath = recentFile.filePath
+                val oldFile = File(recentFile.filePath)
+                if (oldFile.exists()) {
+                    val newFile = File(oldFile.parentFile, newName)
+                    if (oldFile.renameTo(newFile)) {
+                        updatedPath = newFile.absolutePath
+                    }
+                }
+
+                db.recentFileDao().updateFileName(recentFile.id, newName, updatedPath)
+
+                // If also uploaded to Drive, rename in Drive as well
+                val driveId = recentFile.driveFileId
+                if (!driveId.isNullOrEmpty()) {
+                    val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+                    if (account != null) {
+                        try {
+                            val drive = DriveServiceHelper.buildService(requireContext(), account.email!!)
+                            drive.files().update(
+                                driveId,
+                                com.google.api.services.drive.model.File().setName(newName)
+                            ).execute()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to rename in Drive: ${e.message}")
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Document renamed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Rename failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
-    private fun isGoogleDriveAppInstalled(): Boolean {
-        return try {
-            requireContext().packageManager.getPackageInfo("com.google.android.apps.docs", 0)
-            true
-        } catch (e: Exception) {
-            false
+    private fun deleteRecentFile(recentFile: RecentFile) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Document")
+            .setMessage("Are you sure you want to delete '${recentFile.name}'?")
+            .setPositiveButton("Delete") { _, _ ->
+                performDeleteRecentFile(recentFile)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun performDeleteRecentFile(recentFile: RecentFile) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Delete local file
+                val file = File(recentFile.filePath)
+                if (file.exists()) {
+                    file.delete()
+                }
+                // Delete thumbnail
+                if (recentFile.thumbnailUri.isNotEmpty()) {
+                    val thumb = File(recentFile.thumbnailUri)
+                    if (thumb.exists()) thumb.delete()
+                }
+
+                // Delete from Room
+                db.recentFileDao().deleteById(recentFile.id)
+
+                // Delete from Drive if exists
+                val driveId = recentFile.driveFileId
+                if (!driveId.isNullOrEmpty()) {
+                    val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+                    if (account != null) {
+                        try {
+                            val drive = DriveServiceHelper.buildService(requireContext(), account.email!!)
+                            DriveServiceHelper.deleteFile(drive, driveId)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to delete from Drive: ${e.message}")
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Document deleted", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Delete failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
     private fun showFileOptionsMenu(file: DriveFileModel, anchorView: View) {
-        val popup = PopupMenu(requireContext(), anchorView)
-        popup.menuInflater.inflate(R.menu.menu_file_options, popup.menu)
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_share -> { shareFile(file); true }
-                R.id.action_rename -> { renameFile(file); true }
-                R.id.action_delete -> { deleteFile(file); true }
-                else -> false
+        val dialog = BottomSheetDialog(requireContext())
+        val sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_file_options, null)
+        dialog.setContentView(sheetView)
+
+        val tvSheetFileName = sheetView.findViewById<TextView>(R.id.tvSheetFileName)
+        val tvSheetFileDetails = sheetView.findViewById<TextView>(R.id.tvSheetFileDetails)
+        val ivSheetFileIcon = sheetView.findViewById<ImageView>(R.id.ivSheetFileIcon)
+
+        tvSheetFileName.text = file.name
+        val formattedSize = if (file.size > 0) DriveServiceHelper.formatFileSize(file.size) else ""
+        val formattedDate = if (file.modifiedTime > 0) {
+            SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(file.modifiedTime))
+        } else ""
+        tvSheetFileDetails.text = if (formattedSize.isNotEmpty() && formattedDate.isNotEmpty()) {
+            "$formattedSize • $formattedDate"
+        } else formattedSize.ifEmpty { formattedDate }
+
+        val ext = file.name.substringAfterLast('.', "").lowercase()
+        when (ext) {
+            "pdf" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_pdf)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#EF4444"))
+            }
+            "doc", "docx" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_word)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#2563EB"))
+            }
+            "txt" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_text)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#10B981"))
+            }
+            "jpg", "jpeg", "png" -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_scanned_files)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#8B5CF6"))
+            }
+            else -> {
+                ivSheetFileIcon.setImageResource(R.drawable.ic_documents_stack_24)
+                ivSheetFileIcon.setColorFilter(Color.parseColor("#2563EB"))
             }
         }
-        popup.setForceShowIcon(true)
-        popup.show()
+
+        sheetView.findViewById<View>(R.id.actionSheetShare).setOnClickListener {
+            dialog.dismiss()
+            shareFile(file)
+        }
+
+        sheetView.findViewById<View>(R.id.actionSheetRename).setOnClickListener {
+            dialog.dismiss()
+            renameFile(file)
+        }
+
+        sheetView.findViewById<View>(R.id.actionSheetDelete).setOnClickListener {
+            dialog.dismiss()
+            deleteFile(file)
+        }
+
+        dialog.show()
     }
 
     private fun shareFile(file: DriveFileModel) {
@@ -325,8 +593,14 @@ class HomeFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_rename_file, null)
         val editText = dialogView.findViewById<EditText>(R.id.renameInput)
         editText.setText(file.name)
+        val dotIndex = file.name.lastIndexOf('.')
+        if (dotIndex > 0) {
+            editText.setSelection(0, dotIndex)
+        } else {
+            editText.selectAll()
+        }
+
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Rename File")
             .setView(dialogView)
             .setPositiveButton("Rename") { _, _ ->
                 val newName = editText.text.toString().trim()
@@ -368,10 +642,17 @@ class HomeFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val drive = DriveServiceHelper.buildService(requireContext(), account.email!!)
-                drive.files().delete(file.id).execute()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "File deleted", Toast.LENGTH_SHORT).show()
-                    loadDriveFiles()
+                val success = DriveServiceHelper.deleteFile(drive, file.id)
+                if (success) {
+                    db.recentFileDao().deleteByDriveId(file.id)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "File deleted", Toast.LENGTH_SHORT).show()
+                        loadDriveFiles()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Failed to delete file from Drive", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -384,7 +665,14 @@ class HomeFragment : Fragment() {
     private fun initializeViews(view: View) {
         tvUsername = view.findViewById(R.id.tv_Username)
         profileImage = view.findViewById(R.id.profileImage_home)
-        view.findViewById<View>(R.id.iv_scan).setOnClickListener { launchDocumentScanner() }
+        view.findViewById<View>(R.id.iv_scan)?.setOnClickListener { launchDocumentScanner() }
+        view.findViewById<View>(R.id.cardScanHero)?.setOnClickListener { launchDocumentScanner() }
+        view.findViewById<View>(R.id.btnViewAllRecent)?.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, FilesFragment())
+                .addToBackStack("files")
+                .commit()
+        }
         profileImage.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, SettingFragment())
@@ -392,7 +680,7 @@ class HomeFragment : Fragment() {
                 .commit()
         }
 
-        view.findViewById<View>(R.id.cardStorage).setOnClickListener {
+        view.findViewById<View>(R.id.cardStorage)?.setOnClickListener {
             val account = GoogleSignIn.getLastSignedInAccount(requireContext())
             if (account == null || !GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_FILE))) {
                 googleDriveSignInLauncher.launch(driveSignInClient.signInIntent)
@@ -414,14 +702,11 @@ class HomeFragment : Fragment() {
                 try {
                     val drive = DriveServiceHelper.buildService(requireContext(), account.email!!)
                     val files = DriveServiceHelper.listFilesFromAppFolder(drive)
-                    val driveFiles = files.map { file ->
-                        DriveFileModel(file.id, file.name, file.mimeType, file.size ?: 0L, file.modifiedTime, file.thumbnailLink, file.webContentLink, file.createdTime)
-                    }
-                    val totalSize = driveFiles.sumOf { it.size }
+                    val totalSize = files.sumOf { it.size }
                     withContext(Dispatchers.Main) {
-                        driveAdapter.updateFiles(driveFiles.take(4))
-                        tvTotalFiles.text = driveFiles.size.toString()
-                        tvTotalSize.text = formatFileSize(totalSize)
+                        driveAdapter.updateFiles(files.take(4))
+                        tvTotalFiles.text = files.size.toString()
+                        tvTotalSize.text = DriveServiceHelper.formatFileSize(totalSize)
                         stopShimmers()
                     }
                 } catch (e: Exception) {
@@ -435,58 +720,58 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun formatFileSize(size: Long): String {
-        if (size <= 0) return "0 B"
-        val units = arrayOf("B", "KB", "MB", "GB")
-        var s = size.toDouble()
-        var i = 0
-        while (s >= 1024 && i < units.size - 1) { s /= 1024; i++ }
-        return String.format("%.2f %s", s, units[i])
-    }
+    private fun formatFileSize(size: Long): String = DriveServiceHelper.formatFileSize(size)
 
     private fun downloadFileFromDrive(fileId: String, fileName: String) {
         val account = GoogleSignIn.getLastSignedInAccount(requireContext()) ?: return
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val drive = DriveServiceHelper.buildService(requireContext(), account.email!!)
-                val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Docunova")
-                if (!dir.exists()) dir.mkdirs()
-                val file = File(dir, fileName)
-                downloadFile(drive, fileId, file)
+                val mimeType = if (fileName.endsWith(".pdf", ignoreCase = true)) "application/pdf" else "image/jpeg"
+                val uri = DriveServiceHelper.downloadFileToPublicDestination(
+                    requireContext(),
+                    drive,
+                    fileId,
+                    fileName,
+                    mimeType
+                )
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Downloaded to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                    if (uri != null) {
+                        Toast.makeText(requireContext(), "Document downloaded successfully.", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Download failed", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Download failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
     private fun setupOptionButtons(view: View) {
-        val options = listOf(
-            view.findViewById<View>(R.id.tv_select_upload),
-            view.findViewById<View>(R.id.tv_start_translate),
-            view.findViewById<View>(R.id.tv_view_files)
-        )
-        options.forEach { button ->
-            button.setOnClickListener {
-                options.forEach { it.isSelected = false }; button.isSelected = true
-                when (button.id) {
-                    R.id.tv_select_upload -> startActivity(Intent(requireContext(), TypoProcessingActivity::class.java))
-                    R.id.tv_start_translate -> startActivity(Intent(requireContext(), TranslationActivity::class.java))
-                    R.id.tv_view_files -> parentFragmentManager.beginTransaction().replace(R.id.fragment_container, FilesFragment()).addToBackStack("files").commit()
-                }
-            }
+        val openUpload = { startActivity(Intent(requireContext(), TypoProcessingActivity::class.java)) }
+        val openTranslate = { startActivity(Intent(requireContext(), TranslationActivity::class.java)) }
+        val openFiles = {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, FilesFragment())
+                .addToBackStack("files")
+                .commit()
         }
+
+        view.findViewById<View>(R.id.cardUpload)?.setOnClickListener { openUpload() }
+        view.findViewById<View>(R.id.tv_select_upload)?.setOnClickListener { openUpload() }
+
+        view.findViewById<View>(R.id.cardTranslate)?.setOnClickListener { openTranslate() }
+        view.findViewById<View>(R.id.tv_start_translate)?.setOnClickListener { openTranslate() }
+
+        view.findViewById<View>(R.id.cardFiles)?.setOnClickListener { openFiles() }
+        view.findViewById<View>(R.id.tv_view_files)?.setOnClickListener { openFiles() }
     }
 
     private fun setupScanner() {
         scanner = GmsDocumentScanning.getClient(GmsDocumentScannerOptions.Builder().setGalleryImportAllowed(true).setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG, GmsDocumentScannerOptions.RESULT_FORMAT_PDF).setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL).build())
-        scannerLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) handleScanResult(result.data)
-        }
     }
 
     private fun handleScanResult(data: Intent?) {
@@ -499,24 +784,86 @@ class HomeFragment : Fragment() {
     private fun promptFileNameAndSave(pdfUri: Uri, thumbnailUri: Uri) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_filename_prompt, null)
         val input = dialogView.findViewById<EditText>(R.id.filename_input)
-        input.setText("Scan_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}")
+        val defaultName = "Scan_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}"
+        input.setText(defaultName)
         AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
                 val name = input.text.toString().trim()
-                if (name.isNotEmpty()) ensureDriveAccountThenUpload(pdfUri, name)
+                if (name.isNotEmpty()) {
+                    saveDocumentLocalFirst(pdfUri, thumbnailUri, name)
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun ensureDriveAccountThenUpload(pdfUri: Uri, fileName: String) {
-        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
-        if (account != null && GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_FILE))) {
-            uploadToDrive(account, pdfUri, fileName)
-        } else {
-            pendingPdfUri = pdfUri; pendingDriveFileName = fileName
-            googleDriveSignInLauncher.launch(driveSignInClient.signInIntent)
+    private fun saveDocumentLocalFirst(pdfUri: Uri, thumbnailUri: Uri, name: String) {
+        val userId = getCurrentUserId()
+        val formattedDate = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date())
+        val fileName = "$name.pdf"
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Save local copy in internal storage (app-private documents dir)
+                val scansDir = File(requireContext().filesDir, "scanned_docs").apply { if (!exists()) mkdirs() }
+                val localFile = File(scansDir, fileName)
+                requireContext().contentResolver.openInputStream(pdfUri)?.use { input ->
+                    java.io.FileOutputStream(localFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                // 2. Save thumbnail locally if present
+                var localThumbPath = ""
+                try {
+                    val thumbDir = File(requireContext().filesDir, "thumbnails").apply { if (!exists()) mkdirs() }
+                    val thumbFile = File(thumbDir, "${name}_thumb.jpg")
+                    requireContext().contentResolver.openInputStream(thumbnailUri)?.use { input ->
+                        java.io.FileOutputStream(thumbFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    localThumbPath = thumbFile.absolutePath
+                } catch (ignored: Exception) {}
+
+                // 3. Create Room record with uploadStatus = "PENDING"
+                val recentFile = RecentFile(
+                    userId = userId,
+                    name = fileName,
+                    filePath = localFile.absolutePath,
+                    thumbnailUri = localThumbPath,
+                    date = formattedDate,
+                    mimeType = "application/pdf",
+                    uploadStatus = "PENDING",
+                    isSynced = false,
+                    size = localFile.length(),
+                    createdAt = System.currentTimeMillis()
+                )
+                val newId = db.recentFileDao().insert(recentFile).toInt()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Document saved locally", Toast.LENGTH_SHORT).show()
+                }
+
+                // 4. Trigger upload to Google Drive if authorized
+                val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+                if (account != null && GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_FILE))) {
+                    uploadLocalFileToDrive(account, localFile, newId, fileName)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        pendingLocalFile = localFile
+                        pendingFileRecordId = newId
+                        pendingDriveFileName = fileName
+                        googleDriveSignInLauncher.launch(driveSignInClient.signInIntent)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving document locally", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error saving: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -525,92 +872,62 @@ class HomeFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@HomeFragment.adapter
         }
-        db.recentFileDao().getAllFiles().observe(viewLifecycleOwner) { files -> adapter.updateFiles(files ?: emptyList()) }
+        val currentUserId = getCurrentUserId()
+        db.recentFileDao().getFilesByUser(currentUserId).observe(viewLifecycleOwner) { files ->
+            adapter.updateFiles(files ?: emptyList())
+        }
     }
 
     private fun fetchUserDetails() {
         val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val loginMethod = prefs.getString("login_method", null)
-        val cachedEmail = prefs.getString("email", "User")
-        val cachedName = prefs.getString("full_name", cachedEmail)
-        tvUsername.text = cachedName
-        val cachedAvatar = if (loginMethod == "google") prefs.getString("google_avatar_url", null) else prefs.getString("avatar_url", null)
-        if (!cachedAvatar.isNullOrEmpty()) {
-            Glide.with(this).load(cachedAvatar).placeholder(R.drawable.ic_profile).into(profileImage)
+        val googleAccount = GoogleSignIn.getLastSignedInAccount(requireContext())
+        val name = googleAccount?.displayName ?: prefs.getString("full_name", "User")
+        val avatar = googleAccount?.photoUrl?.toString() ?: prefs.getString("avatar_url", null)
+
+        tvUsername.text = name
+        if (!avatar.isNullOrEmpty()) {
+            Glide.with(this).load(avatar).placeholder(R.drawable.ic_profile).into(profileImage)
         }
-        if (loginMethod == "email") fetchSupabaseUserInfo(prefs)
-    }
-
-    private fun fetchSupabaseUserInfo(prefs: android.content.SharedPreferences) {
-        prefs.getString("access_token", null)?.let { token ->
-            val request = object : JsonObjectRequest(Method.GET, "$SUPABASE_URL/auth/v1/user", null,
-                { response -> handleUserResponse(response) },
-                { _ -> Log.e(TAG, "Profile load failed") }
-            ) {
-                override fun getHeaders() = mapOf("apikey" to SUPABASE_API_KEY, "Authorization" to "Bearer $token", "Accept" to "application/json").toMutableMap()
-            }
-            Volley.newRequestQueue(requireContext()).add(request)
-        }
-    }
-
-    private fun handleUserResponse(response: JSONObject) {
-        val email = response.optString("email", "No Email")
-        val metadata = response.optJSONObject("user_metadata")
-        val fullName = metadata?.optString("full_name", email) ?: email
-        tvUsername.text = fullName
-        metadata?.optString("avatar_url")?.takeIf { it.isNotEmpty() }?.let { url ->
-            Glide.with(this).load(url).placeholder(R.drawable.ic_profile).into(profileImage)
-        }
-    }
-
-    private fun fetchUserDocumentsFromSupabase() {
-        val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val userId = prefs.getString("user_id", null)
-        val token = prefs.getString("access_token", null)
-        if (userId != null && token != null) {
-            val url = "$SUPABASE_STORAGE_URL/object/list/$BUCKET_NAME?prefix=$userId/"
-            val request = object : JsonObjectRequest(Method.GET, url, null,
-                { response -> handleDocumentsResponse(response) }, { _ -> }
-            ) {
-                override fun getHeaders() = mapOf("apikey" to SUPABASE_API_KEY, "Authorization" to "Bearer $token").toMutableMap()
-            }
-            Volley.newRequestQueue(requireContext()).add(request)
-        }
-    }
-
-    private fun handleDocumentsResponse(response: JSONObject) {
-        try {
-            val documents = mutableListOf<RecentFile>()
-            val items = response.getJSONArray("data")
-            for (i in 0 until items.length()) {
-                val item = items.getJSONObject(i)
-                documents.add(RecentFile(name = item.getString("name").substringAfterLast('/'), filePath = "", thumbnailUri = "", date = "Recently", isSynced = true))
-            }
-            lifecycleScope.launch(Dispatchers.Main) { adapter.updateFiles(documents) }
-        } catch (_: Exception) {}
-    }
-
-    private fun openDocumentFromSupabase(file: RecentFile) {
-        val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val userId = prefs.getString("user_id", null) ?: return
-        val url = "$SUPABASE_STORAGE_URL/object/$BUCKET_NAME/$userId/${file.name}"
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-    }
-
-    private fun downloadDocument(file: RecentFile) {
-        val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        val userId = prefs.getString("user_id", null) ?: return
-        val token = prefs.getString("access_token", null) ?: return
-        val url = "$SUPABASE_STORAGE_URL/object/$BUCKET_NAME/$userId/${file.name}"
-        val request = object : StringRequest(Method.GET, url, { _ -> openDocumentFromSupabase(file) }, { _ -> }) {
-            override fun getHeaders() = mapOf("apikey" to SUPABASE_API_KEY, "Authorization" to "Bearer $token").toMutableMap()
-        }
-        Volley.newRequestQueue(requireContext()).add(request)
     }
 
     fun launchDocumentScanner() {
-        scanner?.getStartScanIntent(requireActivity())?.addOnSuccessListener { intentSender ->
-            scannerLauncher?.launch(IntentSenderRequest.Builder(intentSender).build())
+        if (!isAdded || isDetached) return
+        val act = activity ?: return
+        try {
+            val scannerClient = scanner ?: GmsDocumentScanning.getClient(
+                GmsDocumentScannerOptions.Builder()
+                    .setGalleryImportAllowed(true)
+                    .setResultFormats(
+                        GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
+                        GmsDocumentScannerOptions.RESULT_FORMAT_PDF
+                    )
+                    .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                    .build()
+            ).also { scanner = it }
+
+            scannerClient.getStartScanIntent(act)
+                .addOnSuccessListener { intentSender ->
+                    if (!isAdded || isDetached) return@addOnSuccessListener
+                    try {
+                        scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to launch document scanner", e)
+                        if (isAdded) {
+                            Toast.makeText(context, "Could not open scanner: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "GmsDocumentScanning failure", e)
+                    if (isAdded) {
+                        Toast.makeText(context, "Scanner unavailable: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        } catch (t: Throwable) {
+            Log.e(TAG, "Error starting scanner", t)
+            if (isAdded) {
+                Toast.makeText(context, "Scanner error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

@@ -3,12 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:strokeWidth="0dp"
+    android:layout_margin="7dp"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#EEF2F6"
+    app:rippleColor="#152563EB">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,7 +21,7 @@
         <!-- Thumbnail Area -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="140dp"
+            android:layout_height="136dp"
             android:background="#F8FAFC">
 
             <ImageView
@@ -35,12 +38,12 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentTop="true"
-                android:layout_margin="8dp"
-                android:background="@drawable/file_type_badge"
+                android:layout_margin="10dp"
+                android:background="@drawable/bg_pill_badge_blue"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
+                android:paddingVertical="3.5dp"
                 android:text="PDF"
-                android:textColor="@color/blue_500"
+                android:textColor="#2563EB"
                 android:textSize="10sp"
                 android:textStyle="bold" />
         </RelativeLayout>
@@ -59,7 +62,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Project_File.pdf"
-                android:textColor="@color/black"
+                android:textColor="#0F172A"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -74,26 +77,29 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
                     android:text="24 Oct 2023"
-                    android:textColor="@color/gray_600"
-                    android:textSize="11sp" />
+                    android:textColor="#64748B"
+                    android:textSize="11.5sp" />
 
                 <TextView
                     android:id="@+id/textSize"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="1.2 MB"
-                    android:textColor="@color/gray_600"
-                    android:textSize="11sp" />
+                    android:textColor="#64748B"
+                    android:textSize="11.5sp" />
             </LinearLayout>
 
-            <!-- Actions Row -->
+            <!-- Actions Divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="8dp"
+                android:layout_marginVertical="9dp"
                 android:background="#F1F5F9" />
 
+            <!-- Actions Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -110,20 +116,22 @@
                     android:focusable="true"
                     android:gravity="center_vertical"
                     android:text="Download"
-                    android:textColor="@color/blue_500"
+                    android:textColor="#2563EB"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     app:drawableStartCompat="@drawable/ic_downlaod"
-                    app:drawableTint="@color/blue_500"
-                    android:drawablePadding="4dp" />
+                    app:drawableTint="#2563EB"
+                    android:drawablePadding="5dp" />
 
                 <ImageButton
                     android:id="@+id/iconMore"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/bg_action_btn_circle"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_more_vert"
-                    app:tint="@color/gray_600" />
+                    app:tint="#64748B" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

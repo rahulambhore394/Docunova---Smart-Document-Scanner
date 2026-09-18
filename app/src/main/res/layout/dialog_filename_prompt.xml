@@ -8,47 +8,104 @@
     android:background="@drawable/bg_dialog_rounded"
     android:orientation="vertical">
 
+    <!-- Header with Squircle Badge -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="16dp">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_edit"
-            app:tint="@color/blue_500" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_squircle_blue">
 
-        <TextView
-            android:layout_width="wrap_content"
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_edit"
+                app:tint="#2563EB"
+                android:contentDescription="Edit Name" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:text="Name your scan"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save Document"
+                android:textColor="#0F172A"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name your scan before saving"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enter a name for your document to save it securely to the cloud."
-        android:textColor="@color/gray_600"
-        android:textSize="14sp"
-        android:layout_marginBottom="20dp"/>
+        android:text="DOCUMENT TITLE"
+        android:textColor="#64748B"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.06"
+        android:layout_marginBottom="8dp" />
 
+    <!-- File Name Input Container -->
     <EditText
         android:id="@+id/filename_input"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:hint="Enter file name"
+        android:layout_height="54dp"
+        android:hint="Scan_2026..."
         android:inputType="text"
-        android:textColor="@color/black"
-        android:textColorHint="@color/gray_600"
-        android:background="@drawable/bg_edittext"
+        android:maxLines="1"
+        android:textColor="#0F172A"
+        android:textColorHint="#94A3B8"
+        android:background="@drawable/bg_modern_edittext"
         android:paddingHorizontal="16dp"
-        android:textSize="16sp" />
+        android:textSize="15sp"
+        android:fontFamily="sans-serif-medium"
+        android:drawableStart="@drawable/ic_documents_stack_24"
+        android:drawablePadding="12dp"
+        android:drawableTint="#64748B" />
+
+    <!-- Storage & Sync Info Pill -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:src="@drawable/ic_shield_check_24"
+            app:tint="#10B981"
+            android:contentDescription="Encrypted" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="Saved locally &amp; synced with Google Drive"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+    </LinearLayout>
 
 </LinearLayout>
